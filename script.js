@@ -2,15 +2,17 @@ async function loadRecordings() {
     const grid = document.getElementById('grid');
     // Clear the placeholder cards immediately
     grid.innerHTML = '<p class="loading">Loading avian symphonies...</p>';
-  
+    const MY_RECORDINGS = ['729053'];
+
     try {
       // 1. Correct Query Construction
       const query = MY_RECORDINGS.map(id => `nr:${id}`).join(' OR ');
       
       // 2. Use the correct API URL + a CORS Proxy
-      const apiUrl = `https://xeno-canto.org/api/2/recordings?query=${query}`;
-      const proxy = 'https://corsproxy.io/?'; // A reliable public proxy
-  
+      const proxy = 'https://corsproxy.io/?';
+      const apiUrl = `https://xeno-canto.org/api/2/recordings?query=nr:${MY_RECORDINGS[0]}`;
+
+      // This combines them so the request can get through the "wall"
       const response = await fetch(proxy + encodeURIComponent(apiUrl));
       
       if (!response.ok) throw new Error('Network response was not ok');
