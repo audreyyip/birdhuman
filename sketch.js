@@ -1,3 +1,4 @@
+console.log("sketch.js loaded");
 let video;
 let faceMesh;
 let faces = [];
