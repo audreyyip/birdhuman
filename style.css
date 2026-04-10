@@ -1,142 +1,18 @@
 * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-  }
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
 
-  body {
-    font-family: 'Segoe UI', sans-serif;
-    background: #000000;
-    color: #2d3b2d;
-    padding: 40px 20px;
-  }
+body {
+  background-color: #1a1a1a;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
 
-  h1 {
-    text-align: center;
-    font-size: 2rem;
-    margin-bottom: 8px;
-    color: white;
-  }
-
-  .subtitle {
-    text-align: center;
-    margin-bottom: 40px;
-    font-size: 0.95rem;
-  }
-
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 20px;
-    max-width: 1000px;
-    margin: 0 auto;
-  }
-
-  .card {
-    background: white;
-    border-radius: 12px;
-    padding: 20px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    transition: transform 0.2s, box-shadow 0.2s;
-    cursor: pointer;
-    user-select: none;
-    position: relative;
-  }
-
-  .card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 6px 16px rgba(0,0,0,0.12);
-  }
-
-  .card.playing {
-    border: 2px solid #3a7d2c;
-    background: #f4fbf2;
-  }
-
-  .card-top {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 4px;
-  }
-
-  .bird-name {
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: #2d5a27;
-  }
-
-  .play-icon {
-    font-size: 1.4rem;
-    line-height: 1;
-    transition: transform 0.15s;
-  }
-
-  .card:hover .play-icon {
-    transform: scale(1.2);
-  }
-
-  .scientific-name {
-    font-style: italic;
-    font-size: 0.85rem;
-    color: #888;
-    margin-bottom: 10px;
-  }
-
-  .tag {
-    display: inline-block;
-    background: #e8f5e2;
-    color: #3a7d2c;
-    font-size: 0.75rem;
-    padding: 2px 8px;
-    border-radius: 20px;
-    margin-right: 4px;
-    margin-bottom: 10px;
-  }
-
-  .card.playing .tag {
-    background: #d0edca;
-  }
-
-  .location {
-    font-size: 0.82rem;
-    color: #888;
-  }
-
-  .location::before {
-    content: '📍 ';
-  }
-
-  /* Progress bar */
-  .progress-bar-track {
-    display: none;
-    height: 4px;
-    background: #ddd;
-    border-radius: 4px;
-    margin-top: 14px;
-    overflow: hidden;
-  }
-
-  .card.playing .progress-bar-track {
-    display: block;
-  }
-
-  .progress-bar-fill {
-    height: 100%;
-    background: #3a7d2c;
-    width: 0%;
-    transition: width 0.5s linear;
-    border-radius: 4px;
-  }
-
-  .loading {
-    text-align: center;
-    font-size: 1rem;
-    margin-top: 60px;
-  }
-
-  .error {
-    text-align: center;
-    color: #c0392b;
-    margin-top: 60px;
-  }
+canvas {
+  display: block;
+  border-radius: 8px;
+}
