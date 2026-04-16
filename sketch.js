@@ -88,7 +88,7 @@ function draw() {
         textAlign(LEFT);
         text(thisemotion.toUpperCase() + ": " + nf(thisemotionlevel, 1, 2), 40, 30 + 30 * k);
         
-        fill(0, 255, 0);
+        fill(0, 255, 0);``
         rect(40, 35 + 30 * k, thisemotionlevel * 100, 5);
         fill(255);
       }
