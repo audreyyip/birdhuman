@@ -1,75 +1,62 @@
 let capture;
 let faceapi;
 let detections = [];
+let canvas;
+let isModelReady = false;
 
 let capturewidth, captureheight;
-let scalar = 1;
-let canvas; // moved to global so windowResized can access it
+let scalar = 1; 
 
 let emotions = ["neutral", "happy", "sad", "angry", "fearful", "disgusted", "surprised"];
 
-function getResponsiveDimensions() {
-  if (windowWidth < windowHeight) {
-    // Portrait: fit within the viewport height too, not just width
-    let w = windowWidth;
-    let h = Math.min(w * (4 / 3), windowHeight); // <-- KEY FIX: cap to screen height
-    w = h * (3 / 4); // re-derive width in case height was the constraint
-    return { w, h };
-  } else {
-    let w = Math.min(960, windowWidth);
-    let h = w * (3 / 4);
-    return { w, h };
-  }
-}
-
 function setup() {
-  let dims = getResponsiveDimensions();
-  capturewidth = dims.w;
-  captureheight = dims.h;
+  // 1. DIMENSIONS & SCALING
+  if (windowWidth < windowHeight) {
+    capturewidth = windowWidth;
+    captureheight = windowWidth * (4 / 3);
+  } else {
+    capturewidth = Math.min(960, windowWidth);
+    captureheight = capturewidth * (3 / 4);
+  }
   scalar = capturewidth / 960;
 
   canvas = createCanvas(capturewidth, captureheight);
-  canvas.position((windowWidth - width) / 2, (windowHeight - height) / 2);
+  centerCanvas();
 
-  // Prevent the page body from scrolling/overflowing
-  canvas.style('display', 'block');
-  document.body.style.margin = '0';
-  document.body.style.overflow = 'hidden';
-  document.body.style.background = '#000';
-
+  // 2. THE VIDEO "BLACK HOLE" (Stops the ghost video)
+  let container = createDiv('');
+  container.style('width', '0px');
+  container.style('height', '0px');
+  container.style('overflow', 'hidden');
+  
   const constraints = {
     video: {
       width: { ideal: capturewidth },
       height: { ideal: captureheight },
       facingMode: 'user'
-    },
-    audio: false
+    }
   };
 
-  capture = createCapture(constraints, function() {
-    // Force the video element to exactly match canvas size
-    capture.size(capturewidth, captureheight);
-  });
-  capture.elt.setAttribute('playsinline', '');
+  capture = createCapture(constraints);
+  capture.parent(container); // Moves video into the 0px box
   capture.hide();
+  capture.elt.setAttribute('playsinline', '');
 
-  const faceOptions = {
-    withLandmarks: true,
-    withExpressions: true,
-    withDescriptors: false,
-    flipHorizontal: false
-  };
-
+  // 3. START FACE API
+  const faceOptions = { withLandmarks: true, withExpressions: true, flipHorizontal: false };
   faceapi = ml5.faceApi(capture, faceOptions, faceReady);
 }
 
 function faceReady() {
-  console.log("FaceAPI Model Loaded");
+  isModelReady = true;
   faceapi.detect(gotFaces);
 }
 
 function gotFaces(error, result) {
-  if (error) { console.log(error); return; }
+  if (error) {
+    console.log(error);
+    return;
+  }
   detections = result;
   faceapi.detect(gotFaces);
 }
@@ -77,63 +64,100 @@ function gotFaces(error, result) {
 function draw() {
   background(0);
 
-  push();
-  translate(width, 0);
-  scale(-1, 1);
+  if (!isModelReady) {
+    drawLoadingScreen();
+  } else {
+    // MAIN APP
+    push();
+    translate(width, 0);
+    scale(-1, 1);
+    if (capture.loadedmetadata) {
+      image(capture, 0, 0, width, height);
+    }
 
-  if (capture.loadedmetadata) {
-    image(capture, 0, 0, width, height);
-  }
-
-  if (detections.length > 0) {
-    // Scale landmarks from capture resolution to canvas resolution
-    let xScale = width / capture.width;
-    let yScale = height / capture.height;
-
-    fill(0, 255, 0);
-    noStroke();
-    for (let i = 0; i < detections.length; i++) {
-      let points = detections[i].landmarks.positions;
-      for (let j = 0; j < points.length; j++) {
-        circle(points[j]._x * xScale, points[j]._y * yScale, 8 * scalar);
+    if (detections.length > 0) {
+      fill(0, 255, 0);
+      noStroke();
+      for (let i = 0; i < detections.length; i++) {
+        let points = detections[i].landmarks.positions;
+        for (let j = 0; j < points.length; j++) {
+          circle(points[j]._x, points[j]._y, 5 * scalar);
+        }
       }
     }
-  }
-  pop();
+    pop();
 
-  if (detections.length > 0) {
-    drawUI();
+    if (detections.length > 0) {
+      drawUI();
+    }
   }
 }
 
-function drawUI() {
-  let baseTextSize = max(14, 20 * scalar); // minimum 14px so it's never too tiny
-  let margin = max(24, 30 * scalar);
-  let barMaxWidth = width * 0.35; // bar spans 35% of canvas width, scales naturally
-  let leftEdge = 12 * scalar;
+function drawLoadingScreen() {
+  fill(255);
+  textAlign(CENTER, CENTER);
+  
+  // Title
+  textSize(32 * scalar);
+  text("SETTING UP...", width / 2, height / 2 - 100 * scalar);
+  
+  // Instructions
+  textSize(18 * scalar);
+  fill(200);
+  text("Tips for best results:", width / 2, height / 2 - 40 * scalar);
+  
+  fill(255);
+  textSize(16 * scalar);
+  let instructions = [
+    "• Make sure there is a light source is in front of you",
+    "• Keep your face centered in the frame",
+  ];
+  
+  for(let i=0; i < instructions.length; i++) {
+    text(instructions[i], width / 2, height / 2 + (i * 25 * scalar));
+  }
+  
+  // Pulsing Loader
+  let pulseAlpha = map(sin(frameCount * 0.1), -1, 1, 50, 255);
+  fill(0, 255, 0, pulseAlpha);
+  ellipse(width / 2, height / 2 + 130 * scalar, 15 * scalar, 15 * scalar);
+}
 
+function drawUI() {
+  let baseTextSize = 20 * scalar;
+  let margin = 30 * scalar;
   textSize(baseTextSize);
   textAlign(LEFT);
-  textFont('monospace');
 
   for (let i = 0; i < detections.length; i++) {
     for (let k = 0; k < emotions.length; k++) {
       let thisEmotion = emotions[k];
       let level = detections[i].expressions[thisEmotion];
       let yPos = margin + (margin * k);
-
-      // Label
+      
       fill(255);
-      noStroke();
-      text(thisEmotion.toUpperCase() + ": " + nf(level, 1, 2), leftEdge, yPos);
-
-      // Bar background (dark green)
-      fill(0, 80, 0);
-      rect(leftEdge, yPos + (5 * scalar), barMaxWidth, 8 * scalar);
-
-      // Bar fill
+      text(thisEmotion.toUpperCase() + ": " + nf(level, 1, 2), 20 * scalar, yPos);
       fill(0, 255, 0);
-      rect(leftEdge, yPos + (5 * scalar), level * barMaxWidth, 8 * scalar);
+      rect(20 * scalar, yPos + (5 * scalar), level * (150 * scalar), 8 * scalar);
     }
   }
+}
+
+function windowResized() {
+  if (windowWidth < windowHeight) {
+    capturewidth = windowWidth;
+    captureheight = windowWidth * (4 / 3);
+  } else {
+    capturewidth = Math.min(960, windowWidth);
+    captureheight = capturewidth * (3 / 4);
+  }
+  resizeCanvas(capturewidth, captureheight);
+  scalar = capturewidth / 960;
+  centerCanvas();
+}
+
+function centerCanvas() {
+  let x = (windowWidth - width) / 2;
+  let y = (windowHeight - height) / 2;
+  canvas.position(x, y);
 }
