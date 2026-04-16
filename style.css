@@ -3,6 +3,11 @@ html, body {
   padding: 0;
   background-color: black;
 }
+
+* { box-sizing: border-box; }
+body { margin: 0; overflow: hidden; background: #000; }
+canvas { display: block; }
+
 canvas {
   display: block;
 }

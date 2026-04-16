@@ -46,7 +46,10 @@ function setup() {
     audio: false
   };
 
-  capture = createCapture(constraints);
+  capture = createCapture(constraints, function() {
+    // Force the video element to exactly match canvas size
+    capture.size(capturewidth, captureheight);
+  });
   capture.elt.setAttribute('playsinline', '');
   capture.hide();
 
@@ -133,16 +136,4 @@ function drawUI() {
       rect(leftEdge, yPos + (5 * scalar), level * barMaxWidth, 8 * scalar);
     }
   }
-}
-
-function windowResized() {
-  let dims = getResponsiveDimensions();
-  capturewidth = dims.w;
-  captureheight = dims.h;
-
-  resizeCanvas(capturewidth, captureheight);
-  scalar = capturewidth / 960;
-
-  // FIX: was `canvas.position` (undefined) — must use `canvas`
-  canvas.position((windowWidth - width) / 2, (windowHeight - height) / 2);
 }
