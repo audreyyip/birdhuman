@@ -6,10 +6,21 @@ let isModelReady = false;
 let startTime;
 let minimumLoadingTime = 5000;
 
+let emotionColors;
+let currentBgColor;
 let capturewidth, captureheight;
 let scalar = 1; 
 
 let emotions = ["neutral", "happy", "sad", "angry", "fearful", "disgusted", "surprised"];
+
+function drawRadialGradient(innerColor, outerColor) {
+  // Convert p5 color objects to CSS strings
+  let c1 = `rgb(${red(innerColor)}, ${green(innerColor)}, ${blue(innerColor)})`;
+  let c2 = `rgb(${red(outerColor)}, ${green(outerColor)}, ${blue(outerColor)})`;
+  
+  // Apply the gradient directly to the canvas element's style
+  canvas.style('background', `radial-gradient(circle, ${c1} 0%, ${c2} 100%)`);
+}
 
 function setup() {
   // 1. DIMENSIONS & SCALING
@@ -49,6 +60,19 @@ function setup() {
   const faceOptions = { withLandmarks: true, withExpressions: true, flipHorizontal: false };
   faceapi = ml5.faceApi(capture, faceOptions, faceReady);
 
+  emotionColors = {
+    "neutral": color(50, 50, 50),     // Gray
+    "happy": color(255, 215, 0),      // Gold/Yellow
+    "sad": color(30, 144, 255),       // Blue
+    "angry": color(255, 69, 0),       // Red-Orange
+    "fearful": color(138, 43, 226),   // Purple
+    "disgusted": color(34, 139, 34),  // Green
+    "surprised": color(255, 105, 180) // Pink
+  };
+  
+  currentBgColor = color(0); // Start with black
+
+
   startTime = millis();
 }
 
@@ -67,25 +91,44 @@ function gotFaces(error, result) {
 }
 
 function draw() {
-  background(0);
+  // clear(); // This is crucial! It makes the canvas transparent.
 
-  // Calculate how much time has passed
-  let timePassed = millis() - startTime;
-
-  // Only proceed if the model is ready AND we have waited long enough
-  if (!isModelReady || timePassed < minimumLoadingTime) {
-    drawLoadingScreen();
+  // let targetColor = color(0); 
+  
+  // if (detections.length > 0) {
+  //   let expressions = detections[0].expressions;
+  //   let highestVal = 0;
+  //   let dominantEmotion = "neutral";
     
-    // Optional: Add a "Progress Bar" at the bottom
-    let progress = map(timePassed, 0, minimumLoadingTime, 0, width);
-    fill(0, 255, 0);
-    rect(0, height - 5, progress, 5); 
+  //   for (let emotion of emotions) {
+  //     if (expressions[emotion] > highestVal) {
+  //       highestVal = expressions[emotion];
+  //       dominantEmotion = emotion;
+  //     }
+  //   }
+  //   targetColor = emotionColors[dominantEmotion];
+  // }
 
+  // // Smooth the color transition
+  // currentBgColor = lerpColor(currentBgColor, targetColor, 0.05);
+
+  // // Call our new CSS-based gradient function
+  // drawRadialGradient(currentBgColor, color(0));
+
+
+  // --- REST OF APP LOGIC ---
+  if (!isModelReady || (millis() - startTime < minimumLoadingTime)) {
+    drawLoadingScreen();
   } else {
-    // --- MAIN APP ---
+    // Mirroring & Video
     push();
     translate(width, 0);
     scale(-1, 1);
+    
+    // Remember to use noStroke() before drawing dots 
+    // because the gradient function uses stroke()!
+    noStroke(); 
+    
     if (capture.loadedmetadata) {
       image(capture, 0, 0, width, height);
     }

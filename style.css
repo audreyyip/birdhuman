@@ -9,5 +9,6 @@ body { margin: 0; overflow: hidden; background: #000; }
 canvas { display: block; }
 
 canvas {
-  display: block;
+  background-color: black; /* Fallback */
+  transition {background: 0.3s ease;} /* Optional: extra smoothness */
 }
