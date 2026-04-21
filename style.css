@@ -23,6 +23,7 @@ body {
   background-color: #2a2a2a;
   padding: 10px 20px;
   border-radius: 8px;
+  flex-wrap: wrap; 
 }
 
 .tool-btn {
@@ -35,7 +36,6 @@ body {
   font-size: 14px;
   transition: background-color 0.2s;
 }
-
 .tool-btn:hover { background-color: #666; }
 
 .danger-btn { border: 1px solid #ff4444; }
@@ -44,13 +44,40 @@ body {
 .export-btn { border: 1px solid #4CAF50; }
 .export-btn:hover { background-color: #4CAF50; }
 
-.color-palette {
+/* SHAPE PALETTE STYLING */
+.shape-palette {
   display: flex;
-  align-items: center;
   gap: 5px;
   border-left: 2px solid #555;
   border-right: 2px solid #555;
   padding: 0 15px;
+}
+
+.shape-btn {
+  background-color: #333;
+  color: #ccc;
+  border: 1px solid #555;
+  padding: 6px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s;
+}
+
+.shape-btn:hover { background-color: #555; color: white; }
+.shape-btn.active {
+  background-color: #4CAF50;
+  color: white;
+  border-color: #4CAF50;
+  font-weight: bold;
+}
+
+.color-palette {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  border-right: 2px solid #555;
+  padding-right: 15px;
 }
 
 .color-picker-input {
@@ -71,11 +98,7 @@ body {
   cursor: pointer;
   transition: transform 0.1s, border 0.1s;
 }
-
-.color-btn:hover {
-  transform: scale(1.2); 
-  border: 2px solid white;
-}
+.color-btn:hover { transform: scale(1.2); border: 2px solid white; }
 
 .record-btn {
   background-color: #2a2a2a;
@@ -88,6 +111,5 @@ body {
   font-weight: bold;
   transition: all 0.2s;
 }
-
 .record-btn:hover { background-color: #ff4444; }
 .record-btn.recording { background-color: #ff4444; color: white; }

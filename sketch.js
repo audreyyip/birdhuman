@@ -21,13 +21,9 @@ let mediaRecorder;
 let recordedChunks = [];
 let isRecording = false;
 
-// --- NEW SHAPE & BLINK VARIABLES ---
-let shapes = ['circle', 'triangle', 'square'];
+// Shape Variables
+let shapes = ['circle', 'rounded-square', 'rounded-triangle', 'star'];
 let shapeIndex = 0;
-let isBlinking = false;
-let blinkStartTime = 0;
-let shapeChangedThisBlink = false;
-const BLINK_THRESHOLD = 0.25; 
 
 function preload() {
   faceMesh = ml5.faceMesh(options);
@@ -47,62 +43,51 @@ function setup() {
   saveState();
   faceMesh.detectStart(video, gotFaces);
 
-  // --- CONNECT HTML BUTTONS ---
+  // Connect Core Buttons
   document.getElementById('btn-undo').addEventListener('click', undoStroke);
-  
-  // RESET BUTTON
   document.getElementById('btn-reset').addEventListener('click', () => {
     pg.clear();
     undoStack = [];
     saveState();
   });
-
-  // DOWNLOAD BUTTON (Downloads as PNG)
-  document.getElementById('btn-download').addEventListener('click', () => {
-    save(pg, 'My-Drawing.png');
-  });
-
+  document.getElementById('btn-download').addEventListener('click', () => { save(pg, 'My-Drawing.png'); });
   document.getElementById('btn-eraser').addEventListener('click', () => { isErasing = true; });
 
-  // COLOR PICKER (RGB Spectrum)
+  // Connect Shape UI Buttons
+  let shapeButtons = document.querySelectorAll('.shape-btn');
+  shapeButtons.forEach((btn, index) => {
+    btn.addEventListener('click', () => {
+      shapeIndex = index;
+      updateShapeUI();
+    });
+  });
+
+  // Color Pickers
   document.getElementById('color-picker').addEventListener('input', (e) => {
     isErasing = false;
     currentColor = e.target.value;
   });
 
-  // STANDARD COLORS
   let colorButtons = document.querySelectorAll('.color-btn');
   colorButtons.forEach(btn => {
     btn.addEventListener('click', (e) => {
       isErasing = false; 
       currentColor = e.target.getAttribute('data-color'); 
-      // Sync the color picker visual with the button pressed
       document.getElementById('color-picker').value = currentColor;
     });
   });
 
+  // Recording Setup (WebM)
   document.getElementById('btn-record').addEventListener('click', toggleRecord);
-
-  // --- MP4 RECORDING SETUP ---
   let stream = document.querySelector('canvas').captureStream(30);
-  
-  // Force H.264 codec for standard MP4 playback compatibility
-  let recOptions = { mimeType: 'video/webm;codecs=h264' };
-  if (!MediaRecorder.isTypeSupported(recOptions.mimeType)) {
-    recOptions = { mimeType: 'video/webm' }; // Safe fallback if browser strictly refuses
-  }
-  
-  mediaRecorder = new MediaRecorder(stream, recOptions);
-  mediaRecorder.ondataavailable = function(e) {
-    if (e.data.size > 0) recordedChunks.push(e.data);
-  };
-  
+  mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+  mediaRecorder.ondataavailable = function(e) { if (e.data.size > 0) recordedChunks.push(e.data); };
   mediaRecorder.onstop = function() {
-    let blob = new Blob(recordedChunks, { type: 'video/mp4' }); // Wrap in MP4 container
+    let blob = new Blob(recordedChunks, { type: 'video/webm' }); 
     let url = URL.createObjectURL(blob);
     let a = document.createElement('a');
     a.href = url;
-    a.download = 'My-HandsFree-Drawing.mp4'; // Download as MP4
+    a.download = 'My-HandsFree-Drawing.webm'; 
     a.click();
     window.URL.revokeObjectURL(url);
     recordedChunks = [];
@@ -112,14 +97,14 @@ function setup() {
 function draw() {
   background(15); 
 
-  // LEFT SIDE: MIRRORED VIDEO
+  // LEFT SIDE
   push();
   translate(640, 0); 
   scale(-1, 1);      
   image(video, 0, 0, 640, 480);
   pop();
 
-  // RIGHT SIDE: DRAWING CANVAS
+  // RIGHT SIDE
   fill(30); 
   noStroke();
   rect(640, 0, 640, 480);
@@ -128,52 +113,32 @@ function draw() {
   if (faces.length > 0) {
     let face = faces[0];
 
-    // NOSE TRACKING
+    // Nose Position
     let mirroredNoseX = 640 - face.keypoints[1].x; 
     let noseY = face.keypoints[1].y;
     lerpNoseX = lerp(lerpNoseX, mirroredNoseX, lerpSpeed);
     lerpNoseY = lerp(lerpNoseY, noseY, lerpSpeed);
 
-    // MOUTH SIZE
+    // Mouth Size
     let mouthSize = dist(face.keypoints[13].x, face.keypoints[13].y, face.keypoints[14].x, face.keypoints[14].y);
 
-    // --- NEW: LONG BLINK SHAPE CHANGING LOGIC ---
-    let leftRatio = calculateEAR(face.keypoints, 33, 133, 160, 144, 158, 153);
-    let rightRatio = calculateEAR(face.keypoints, 362, 263, 385, 380, 387, 373);
-    let currentEyeRatio = Math.max(leftRatio, rightRatio);
-
-    if (currentEyeRatio < BLINK_THRESHOLD) {
-      if (!isBlinking) {
-        isBlinking = true;
-        blinkStartTime = millis(); 
-      } else if (millis() - blinkStartTime > 1000 && !shapeChangedThisBlink) {
-        // Blink held for 500ms! Change shape and lock it until eyes open.
-        shapeIndex = (shapeIndex + 1) % shapes.length;
-        shapeChangedThisBlink = true; 
-      }
-    } else {
-      isBlinking = false;
-      shapeChangedThisBlink = false; 
-    }
-
-    // --- CUSTOM BRUSH RENDERING ---
+    // DRAWING LOGIC
     if (isDrawing) {
       if (isErasing) {
         pg.erase(); 
+        pg.stroke(255); 
         pg.strokeWeight(mouthSize * 1.5); 
         if (prevX !== undefined) {
           pg.line(lerpNoseX, lerpNoseY, prevX, prevY);
         }
         pg.noErase();
       } else {
-        // Draw with shapes
-        pg.noStroke();
+        pg.noStroke(); 
         pg.fill(currentColor);
         
         if (prevX !== undefined) {
-          // Calculate distance to fill in gaps between frames
           let d = dist(prevX, prevY, lerpNoseX, lerpNoseY);
-          let steps = Math.max(1, d / (mouthSize / 4)); // Overlap stamps densely
+          let steps = Math.max(1, d / (mouthSize / 4)); 
           
           for (let i = 0; i <= steps; i++) {
             let interX = lerp(prevX, lerpNoseX, i / steps);
@@ -186,34 +151,28 @@ function draw() {
     prevX = lerpNoseX;
     prevY = lerpNoseY;
 
-    // --- VISUAL CURSORS ---
+    // Cursors
     fill(255, 0, 0);
     noStroke();
-    circle(lerpNoseX, lerpNoseY, 8);
+    circle(lerpNoseX, lerpNoseY, 8); 
     
-    // Draw current brush shape over the drawing side to act as a preview
     if (isErasing) {
       fill(255); 
       circle(640 + lerpNoseX, lerpNoseY, 8);
     } else {
-      fill(currentColor);  
       push();
-      translate(640, 0); // Shift rendering to right side
-      // Quick temporary Graphics context equivalent for preview
-      if (shapes[shapeIndex] === 'circle') circle(lerpNoseX, lerpNoseY, 15);
-      else if (shapes[shapeIndex] === 'square') { rectMode(CENTER); rect(lerpNoseX, lerpNoseY, 15, 15); }
-      else if (shapes[shapeIndex] === 'triangle') triangle(lerpNoseX, lerpNoseY-7, lerpNoseX-7, lerpNoseY+7, lerpNoseX+7, lerpNoseY+7);
+      translate(640, 0);
+      drawShapePreview(lerpNoseX, lerpNoseY, 20); 
       pop();
     }
   }
 
-  // UI TEXT
+  // UI Text
   fill(255);
   textSize(16);
   textAlign(LEFT, TOP);
   text("Press SPACEBAR to Start/Stop Drawing", 15, 15); 
   text(isDrawing ? "STATUS: 🟢 DRAWING" : "STATUS: 🔴 HOVERING", 15, 40);
-  text("BRUSH: " + shapes[shapeIndex].toUpperCase() + " (Long blink to change)", 15, 65);
   
   if (isRecording) {
     fill(255, 0, 0);
@@ -221,38 +180,81 @@ function draw() {
   }
 }
 
-// Helper to stamp the correct geometry onto the canvas
 function stampShape(x, y, size) {
   let r = size / 2;
-  if (shapes[shapeIndex] === 'circle') {
+  let activeShape = shapes[shapeIndex];
+
+  if (activeShape === 'circle') {
+    pg.noStroke();
     pg.circle(x, y, size);
-  } else if (shapes[shapeIndex] === 'square') {
+  } else if (activeShape === 'rounded-square') {
+    pg.noStroke();
     pg.rectMode(CENTER);
-    pg.rect(x, y, size, size);
-  } else if (shapes[shapeIndex] === 'triangle') {
+    pg.rect(x, y, size, size, size * 0.25); 
+  } else if (activeShape === 'rounded-triangle') {
+    pg.push();
+    pg.strokeJoin(ROUND);
+    pg.strokeWeight(size * 0.3);
+    pg.stroke(currentColor);
+    pg.fill(currentColor);
     pg.triangle(x, y - r, x - r, y + r, x + r, y + r);
+    pg.pop();
+  } else if (activeShape === 'star') {
+    pg.noStroke();
+    drawStar(pg, x, y, size * 0.25, size * 0.6, 5); 
   }
 }
 
-// Refactored 6-Point EAR Math Function
-function calculateEAR(kp, p1, p2, p3, p4, p5, p6) {
-  let vert1 = dist(kp[p3].x, kp[p3].y, kp[p4].x, kp[p4].y);
-  let vert2 = dist(kp[p5].x, kp[p5].y, kp[p6].x, kp[p6].y);
-  let horiz = dist(kp[p1].x, kp[p1].y, kp[p2].x, kp[p2].y);
-  return (vert1 + vert2) / (2 * horiz);
+function drawShapePreview(x, y, size) {
+  let r = size / 2;
+  let activeShape = shapes[shapeIndex];
+  
+  fill(currentColor);
+  if (activeShape === 'circle') {
+    noStroke();
+    circle(x, y, size);
+  } else if (activeShape === 'rounded-square') {
+    noStroke();
+    rectMode(CENTER);
+    rect(x, y, size, size, size * 0.25);
+  } else if (activeShape === 'rounded-triangle') {
+    strokeJoin(ROUND);
+    strokeWeight(size * 0.3);
+    stroke(currentColor);
+    triangle(x, y - r, x - r, y + r, x + r, y + r);
+  } else if (activeShape === 'star') {
+    noStroke();
+    drawStar(window, x, y, size * 0.25, size * 0.6, 5); 
+  }
 }
 
-function gotFaces(results) {
-  faces = results;
+function drawStar(ctx, x, y, radius1, radius2, npoints) {
+  let angle = TWO_PI / npoints;
+  let halfAngle = angle / 2.0;
+  ctx.beginShape();
+  for (let a = -PI / 2; a < TWO_PI - PI / 2; a += angle) {
+    let sx = x + cos(a) * radius2;
+    let sy = y + sin(a) * radius2;
+    ctx.vertex(sx, sy);
+    sx = x + cos(a + halfAngle) * radius1;
+    sy = y + sin(a + halfAngle) * radius1;
+    ctx.vertex(sx, sy);
+  }
+  ctx.endShape(CLOSE);
 }
+
+function updateShapeUI() {
+  let shapeButtons = document.querySelectorAll('.shape-btn');
+  shapeButtons.forEach(btn => btn.classList.remove('active'));
+  shapeButtons[shapeIndex].classList.add('active');
+}
+
+function gotFaces(results) { faces = results; }
 
 function keyPressed() {
   if (key === ' ') {
     isDrawing = !isDrawing;
-    if (isDrawing) {
-      saveState();
-      prevX = undefined; 
-    }
+    if (isDrawing) { saveState(); prevX = undefined; }
   }
 }
 
@@ -266,24 +268,21 @@ function undoStroke() {
     let lastState = undoStack.pop();
     pg.clear();
     pg.image(lastState, 0, 0);
-  } else {
-    pg.clear(); 
-  }
+  } else { pg.clear(); }
 }
 
 function toggleRecord() {
   let btnRecord = document.getElementById('btn-record');
-  
   if (!isRecording) {
     recordedChunks = [];
     mediaRecorder.start();
     isRecording = true;
-    btnRecord.innerText = 'Stop & Save Video';
+    btnRecord.innerText = '⬛ Stop & Save Video';
     btnRecord.classList.add('recording');
   } else {
     mediaRecorder.stop();
     isRecording = false;
-    btnRecord.innerText = 'Record Video';
+    btnRecord.innerText = '🔴 Record Video';
     btnRecord.classList.remove('recording');
   }
 }
