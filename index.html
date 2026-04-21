@@ -1,18 +1,37 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/addons/p5.sound.min.js"></script>
-    
-    <script src="https://cdn.jsdelivr.net/gh/ml5js/Intro-ML-Arts-IMA@ml5-build-10-7-19/ml5_build/ml5.min.js"></script>
-    
-    <link rel="stylesheet" type="text/css" href="style.css">
-    <meta charset="utf-8" />
+<head>
+  <meta charset="UTF-8">
+  <title>Hands-Free Drawing Game</title>
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+  <script src="https://unpkg.com/ml5@1/dist/ml5.min.js"></script>
+  
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
 
-  </head>
-  <body>
-    <main>
-    </main>
-    <script src="sketch.js"></script>
-  </body>
+  <div id="app-container">
+    <div id="canvas-container"></div>
+
+    <div id="toolbar">
+      <button id="btn-undo" class="tool-btn">↩ Undo</button>
+      <button id="btn-eraser" class="tool-btn">Eraser</button>
+      
+      <div class="color-palette">
+        <button class="color-btn" style="background-color: #FF0000;" data-color="#FF0000"></button>
+        <button class="color-btn" style="background-color: #FFA500;" data-color="#FFA500"></button>
+        <button class="color-btn" style="background-color: #FFFF00;" data-color="#FFFF00"></button>
+        <button class="color-btn" style="background-color: #00FF00;" data-color="#00FF00"></button>
+        <button class="color-btn" style="background-color: #0000FF;" data-color="#0000FF"></button>
+        <button class="color-btn" style="background-color: #800080;" data-color="#800080"></button>
+      </div>
+
+      <button id="btn-record" class="record-btn">Record</button>
+    </div>
+  </div>
+
+  <script src="sketch.js"></script>
+
+</body>
 </html>

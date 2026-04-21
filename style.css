@@ -1,14 +1,89 @@
-html, body {
-  margin: 0;
-  padding: 0;
-  background-color: black;
-}
-
-* { box-sizing: border-box; }
-body { margin: 0; overflow: hidden; background: #000; }
-canvas { display: block; }
-
-canvas {
-  background-color: black; /* Fallback */
-  transition {background: 0.3s ease;} /* Optional: extra smoothness */
-}
+/* General Webpage Styling */
+body {
+    background-color: #1a1a1a;
+    color: white;
+    font-family: sans-serif;
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+  }
+  
+  #app-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px; /* Space between canvas and toolbar */
+  }
+  
+  /* Toolbar Styling */
+  #toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    background-color: #2a2a2a;
+    padding: 10px 20px;
+    border-radius: 8px;
+  }
+  
+  .tool-btn {
+    background-color: #444;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.2s;
+  }
+  
+  .tool-btn:hover {
+    background-color: #666;
+  }
+  
+  /* Color Palette Styling */
+  .color-palette {
+    display: flex;
+    gap: 5px;
+    border-left: 2px solid #555;
+    border-right: 2px solid #555;
+    padding: 0 15px;
+  }
+  
+  .color-btn {
+    width: 30px;
+    height: 30px;
+    border: 2px solid transparent; /* Invisible border until hovered */
+    border-radius: 50%;
+    cursor: pointer;
+    transition: transform 0.1s, border 0.1s;
+  }
+  
+  .color-btn:hover {
+    transform: scale(1.1); /* Makes the button pop out slightly */
+    border: 2px solid white;
+  }
+  
+  /* Record Button Styling */
+  .record-btn {
+    background-color: #2a2a2a;
+    color: white;
+    border: 2px solid #ff4444;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    transition: all 0.2s;
+  }
+  
+  .record-btn:hover {
+    background-color: #ff4444;
+  }
+  
+  /* We use JavaScript to add this class when recording is active */
+  .record-btn.recording {
+    background-color: #ff4444;
+    color: white;
+  }

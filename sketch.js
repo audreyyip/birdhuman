@@ -1,220 +1,203 @@
-let capture;
-let faceapi;
-let detections = [];
-let canvas;
-let isModelReady = false;
-let startTime;
-let minimumLoadingTime = 5000;
+let faceMesh;
+let video;
+let faces = [];
+let options = { maxFaces: 1, refineLandmarks: false, flipHorizontal: false };
 
-let emotionColors;
-let currentBgColor;
-let capturewidth, captureheight;
-let scalar = 1; 
+// Drawing & Smoothing
+let lerpSpeed = 0.2;   
+let pg; 
+let isDrawing = false;
+let lerpNoseX = 0;
+let lerpNoseY = 0;
+let prevX, prevY;
 
-let emotions = ["neutral", "happy", "sad", "angry", "fearful", "disgusted", "surprised"];
+// Tools
+let currentColor = '#00FF00'; // Default Green
+let isErasing = false;
+let undoStack = [];
 
-function drawRadialGradient(innerColor, outerColor) {
-  // Convert p5 color objects to CSS strings
-  let c1 = `rgb(${red(innerColor)}, ${green(innerColor)}, ${blue(innerColor)})`;
-  let c2 = `rgb(${red(outerColor)}, ${green(outerColor)}, ${blue(outerColor)})`;
-  
-  // Apply the gradient directly to the canvas element's style
-  canvas.style('background', `radial-gradient(circle, ${c1} 0%, ${c2} 100%)`);
+// Recording
+let mediaRecorder;
+let recordedChunks = [];
+let isRecording = false;
+
+function preload() {
+  faceMesh = ml5.faceMesh(options);
 }
 
 function setup() {
-  // 1. DIMENSIONS & SCALING
-  if (windowWidth < windowHeight) {
-    capturewidth = windowWidth;
-    captureheight = windowWidth * (4 / 3);
-  } else {
-    capturewidth = Math.min(960, windowWidth);
-    captureheight = capturewidth * (3 / 4);
-  }
-  scalar = capturewidth / 960;
+  // Connect canvas to the HTML div
+  let cnv = createCanvas(1280, 480); 
+  cnv.parent('canvas-container');
 
-  canvas = createCanvas(capturewidth, captureheight);
-  centerCanvas();
-
-  // 2. THE VIDEO "BLACK HOLE" (Stops the ghost video)
-  let container = createDiv('');
-  container.style('width', '0px');
-  container.style('height', '0px');
-  container.style('overflow', 'hidden');
+  video = createCapture(VIDEO);
+  video.size(640, 480);
+  video.hide();
   
-  const constraints = {
-    video: {
-      width: { ideal: capturewidth },
-      height: { ideal: captureheight },
-      facingMode: 'user'
-    }
+  pg = createGraphics(640, 480);
+  pg.clear();
+
+  saveState();
+  faceMesh.detectStart(video, gotFaces);
+
+  // --- CONNECT HTML BUTTONS TO JAVASCRIPT LOGIC ---
+  
+  // Undo & Eraser
+  document.getElementById('btn-undo').addEventListener('click', undoStroke);
+  document.getElementById('btn-eraser').addEventListener('click', () => { isErasing = true; });
+
+  // Connect all color buttons at once
+  let colorButtons = document.querySelectorAll('.color-btn');
+  colorButtons.forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      isErasing = false; 
+      // Pulls the hex code from the HTML data-color attribute
+      currentColor = e.target.getAttribute('data-color'); 
+    });
+  });
+
+  // Record Button
+  document.getElementById('btn-record').addEventListener('click', toggleRecord);
+
+  // Setup MediaRecorder for Canvas Capture
+  let stream = document.querySelector('canvas').captureStream(30);
+  mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+  
+  mediaRecorder.ondataavailable = function(e) {
+    if (e.data.size > 0) recordedChunks.push(e.data);
   };
   
-
-  capture = createCapture(constraints);
-  capture.parent(container); // Moves video into the 0px box
-  capture.hide();
-  capture.elt.setAttribute('playsinline', '');
-
-  // 3. START FACE API
-  const faceOptions = { withLandmarks: true, withExpressions: true, flipHorizontal: false };
-  faceapi = ml5.faceApi(capture, faceOptions, faceReady);
-
-  emotionColors = {
-    "neutral": color(50, 50, 50),     // Gray
-    "happy": color(255, 215, 0),      // Gold/Yellow
-    "sad": color(30, 144, 255),       // Blue
-    "angry": color(255, 69, 0),       // Red-Orange
-    "fearful": color(138, 43, 226),   // Purple
-    "disgusted": color(34, 139, 34),  // Green
-    "surprised": color(255, 105, 180) // Pink
+  mediaRecorder.onstop = function() {
+    let blob = new Blob(recordedChunks, { type: 'video/webm' });
+    let url = URL.createObjectURL(blob);
+    let a = document.createElement('a');
+    a.href = url;
+    a.download = 'My-HandsFree-Drawing.webm';
+    a.click();
+    window.URL.revokeObjectURL(url);
+    recordedChunks = [];
   };
-  
-  currentBgColor = color(0); // Start with black
-
-
-  startTime = millis();
-}
-
-function faceReady() {
-  isModelReady = true;
-  faceapi.detect(gotFaces);
-}
-
-function gotFaces(error, result) {
-  if (error) {
-    console.log(error);
-    return;
-  }
-  detections = result;
-  faceapi.detect(gotFaces);
 }
 
 function draw() {
-  // clear(); // This is crucial! It makes the canvas transparent.
+  background(15); 
 
-  // let targetColor = color(0); 
-  
-  // if (detections.length > 0) {
-  //   let expressions = detections[0].expressions;
-  //   let highestVal = 0;
-  //   let dominantEmotion = "neutral";
-    
-  //   for (let emotion of emotions) {
-  //     if (expressions[emotion] > highestVal) {
-  //       highestVal = expressions[emotion];
-  //       dominantEmotion = emotion;
-  //     }
-  //   }
-  //   targetColor = emotionColors[dominantEmotion];
-  // }
+  // --- LEFT SIDE: MIRRORED VIDEO ---
+  push();
+  translate(640, 0); 
+  scale(-1, 1);      
+  image(video, 0, 0, 640, 480);
+  pop();
 
-  // // Smooth the color transition
-  // currentBgColor = lerpColor(currentBgColor, targetColor, 0.05);
+  // --- RIGHT SIDE: DRAWING CANVAS ---
+  fill(30); 
+  noStroke();
+  rect(640, 0, 640, 480);
+  image(pg, 640, 0);
 
-  // // Call our new CSS-based gradient function
-  // drawRadialGradient(currentBgColor, color(0));
+  // --- PROCESSING FACES ---
+  if (faces.length > 0) {
+    let face = faces[0];
 
+    // Track mirrored nose coordinates
+    let mirroredNoseX = 640 - face.keypoints[1].x; 
+    let noseY = face.keypoints[1].y;
 
-  // --- REST OF APP LOGIC ---
-  if (!isModelReady || (millis() - startTime < minimumLoadingTime)) {
-    drawLoadingScreen();
-  } else {
-    // Mirroring & Video
-    push();
-    translate(width, 0);
-    scale(-1, 1);
-    
-    // Remember to use noStroke() before drawing dots 
-    // because the gradient function uses stroke()!
-    noStroke(); 
-    
-    if (capture.loadedmetadata) {
-      image(capture, 0, 0, width, height);
-    }
-    
-    if (detections.length > 0) {
-      fill(0, 255, 0);
-      for (let i = 0; i < detections.length; i++) {
-        let points = detections[i].landmarks.positions;
-        for (let j = 0; j < points.length; j++) {
-          circle(points[j]._x, points[j]._y, 5 * scalar);
-        }
+    lerpNoseX = lerp(lerpNoseX, mirroredNoseX, lerpSpeed);
+    lerpNoseY = lerp(lerpNoseY, noseY, lerpSpeed);
+
+    // Mouth Opening controls size
+    let mouthSize = dist(face.keypoints[13].x, face.keypoints[13].y, face.keypoints[14].x, face.keypoints[14].y);
+
+    // --- DRAWING TO THE BUFFER ---
+    if (isDrawing) {
+      if (isErasing) {
+        pg.erase(); 
+        pg.strokeWeight(mouthSize * 1.5); 
+      } else {
+        pg.noErase();
+        pg.stroke(currentColor);
+        pg.strokeWeight(mouthSize);
+      }
+      
+      if (prevX !== undefined) {
+        pg.line(lerpNoseX, lerpNoseY, prevX, prevY);
       }
     }
-    pop();
     
-    if (detections.length > 0) {
-      drawUI();
+    prevX = lerpNoseX;
+    prevY = lerpNoseY;
+
+    // --- VISUAL CURSORS ---
+    fill(255, 0, 0);
+    noStroke();
+    circle(lerpNoseX, lerpNoseY, 8);
+    
+    if (isErasing) fill(255); 
+    else fill(currentColor);  
+    circle(640 + lerpNoseX, lerpNoseY, 8);
+  }
+
+  // --- ON-SCREEN INSTRUCTIONS ---
+  fill(255);
+  textSize(16);
+  textAlign(LEFT, TOP);
+  text("Press SPACEBAR to Start/Stop Drawing", 15, 15); 
+  text(isDrawing ? "STATUS: 🟢 DRAWING" : "STATUS: 🔴 HOVERING", 15, 40);
+  
+  if (isRecording) {
+    fill(255, 0, 0);
+    text("REC", 600, 15);
+  }
+}
+
+function gotFaces(results) {
+  faces = results;
+}
+
+function keyPressed() {
+  if (key === ' ') {
+    isDrawing = !isDrawing;
+    if (isDrawing) {
+      saveState();
+      prevX = undefined; 
     }
   }
 }
 
-function drawLoadingScreen() {
-  fill(255);
-  textAlign(CENTER, CENTER);
-  
-  // Title
-  textSize(32 * scalar);
-  text("LOADING...", width / 2, height / 2 - 100 * scalar);
-  
-  // Instructions
-  textSize(18 * scalar);
-  fill(200);
-  text("Tips for best results:", width / 2, height / 2 - 40 * scalar);
-  
-  fill(255);
-  textSize(16 * scalar);
-  let instructions = [
-    "• Make sure there is a light source is in front of you",
-    "• Keep your face centered in the frame",
-  ];
-  
-  for(let i=0; i < instructions.length; i++) {
-    text(instructions[i], width / 2, height / 2 + (i * 25 * scalar));
-  }
-  
-  // Pulsing Loader
-  let pulseAlpha = map(sin(frameCount * 0.1), -1, 1, 50, 255);
-  fill(0, 255, 0, pulseAlpha);
-  ellipse(width / 2, height / 2 + 130 * scalar, 15 * scalar, 15 * scalar);
-}
-
-function drawUI() {
-  let baseTextSize = 20 * scalar;
-  let margin = 30 * scalar;
-  textSize(baseTextSize);
-  textAlign(LEFT);
-
-  for (let i = 0; i < detections.length; i++) {
-    for (let k = 0; k < emotions.length; k++) {
-      let thisEmotion = emotions[k];
-      let level = detections[i].expressions[thisEmotion];
-      let yPos = margin + (margin * k);
-      
-      fill(255);
-      text(thisEmotion.toUpperCase() + ": " + nf(level, 1, 2), 20 * scalar, yPos);
-      fill(0, 255, 0);
-      rect(20 * scalar, yPos + (5 * scalar), level * (150 * scalar), 8 * scalar);
-    }
+function saveState() {
+  undoStack.push(pg.get());
+  if (undoStack.length > 10) {
+    undoStack.shift(); 
   }
 }
 
-function windowResized() {
-  if (windowWidth < windowHeight) {
-    capturewidth = windowWidth;
-    captureheight = windowWidth * (4 / 3);
+function undoStroke() {
+  if (undoStack.length > 0) {
+    let lastState = undoStack.pop();
+    pg.clear();
+    pg.image(lastState, 0, 0);
   } else {
-    capturewidth = Math.min(960, windowWidth);
-    captureheight = capturewidth * (3 / 4);
+    pg.clear(); 
   }
-  resizeCanvas(capturewidth, captureheight);
-  scalar = capturewidth / 960;
-  centerCanvas();
 }
 
-function centerCanvas() {
-  let x = (windowWidth - width) / 2;
-  let y = (windowHeight - height) / 2;
-  canvas.position(x, y);
+function toggleRecord() {
+  let btnRecord = document.getElementById('btn-record');
+  
+  if (!isRecording) {
+    recordedChunks = [];
+    mediaRecorder.start();
+    isRecording = true;
+    
+    // Update button visually via JavaScript
+    btnRecord.innerText = '⬛ Stop & Save Video';
+    btnRecord.classList.add('recording'); // Triggers CSS style
+  } else {
+    mediaRecorder.stop();
+    isRecording = false;
+    
+    btnRecord.innerText = '🔴 Start Recording';
+    btnRecord.classList.remove('recording');
+  }
 }
