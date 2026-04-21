@@ -16,18 +16,26 @@
 
     <div id="toolbar">
       <button id="btn-undo" class="tool-btn">↩ Undo</button>
+      <button id="btn-reset" class="tool-btn danger-btn">🗑️ Reset</button>
       <button id="btn-eraser" class="tool-btn">Eraser</button>
       
       <div class="color-palette">
+        <input type="color" id="color-picker" class="color-picker-input" value="#00FF00" title="Pick ANY color">
+        
         <button class="color-btn" style="background-color: #FF0000;" data-color="#FF0000"></button>
         <button class="color-btn" style="background-color: #FFA500;" data-color="#FFA500"></button>
         <button class="color-btn" style="background-color: #FFFF00;" data-color="#FFFF00"></button>
         <button class="color-btn" style="background-color: #00FF00;" data-color="#00FF00"></button>
         <button class="color-btn" style="background-color: #0000FF;" data-color="#0000FF"></button>
         <button class="color-btn" style="background-color: #800080;" data-color="#800080"></button>
+        <button class="color-btn" style="background-color: #000000;" data-color="#000000"></button>
+        <button class="color-btn" style="background-color: #FFFFFF;" data-color="#FFFFFF"></button>
+        <button class="color-btn" style="background-color: #8B4513;" data-color="#8B4513"></button>
+        <button class="color-btn" style="background-color: #808080;" data-color="#808080"></button>
       </div>
 
-      <button id="btn-record" class="record-btn">Record</button>
+      <button id="btn-download" class="tool-btn export-btn">💾 Save Image</button>
+      <button id="btn-record" class="record-btn">🔴 Record Video</button>
     </div>
   </div>
 
