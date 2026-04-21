@@ -1,39 +1,49 @@
+* { box-sizing: border-box; }
+
 body {
   background-color: #1a1a1a;
   color: white;
   font-family: sans-serif;
   margin: 0;
-  padding: 20px;
+  padding: 0;
   display: flex;
   justify-content: center;
+  align-items: center;
+  height: 100vh;
+  overflow: hidden; /* Prevents scroll bounce on mobile */
 }
 
 #app-container {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 15px; 
+  width: 100%;
+  height: 100%;
+  padding: 10px;
+  gap: 10px; 
 }
 
 #toolbar {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: 10px;
   background-color: #2a2a2a;
-  padding: 10px 20px;
+  padding: 10px;
   border-radius: 8px;
   flex-wrap: wrap; 
+  width: 100%;
+  max-width: 1280px;
 }
 
 .tool-btn {
   background-color: #444;
   color: white;
   border: none;
-  padding: 8px 14px;
+  padding: 8px 12px;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 13px;
   transition: background-color 0.2s;
 }
 .tool-btn:hover { background-color: #666; }
@@ -44,27 +54,23 @@ body {
 .export-btn { border: 1px solid #4CAF50; }
 .export-btn:hover { background-color: #4CAF50; }
 
-/* SHAPE PALETTE STYLING */
 .shape-palette {
   display: flex;
   gap: 5px;
   border-left: 2px solid #555;
   border-right: 2px solid #555;
-  padding: 0 15px;
+  padding: 0 10px;
 }
 
 .shape-btn {
   background-color: #333;
   color: #ccc;
   border: 1px solid #555;
-  padding: 6px 10px;
+  padding: 6px 8px;
   border-radius: 4px;
   cursor: pointer;
   font-size: 12px;
-  transition: all 0.2s;
 }
-
-.shape-btn:hover { background-color: #555; color: white; }
 .shape-btn.active {
   background-color: #4CAF50;
   color: white;
@@ -77,39 +83,69 @@ body {
   align-items: center;
   gap: 5px;
   border-right: 2px solid #555;
-  padding-right: 15px;
+  padding-right: 10px;
 }
 
 .color-picker-input {
-  width: 35px;
-  height: 35px;
+  width: 30px;
+  height: 30px;
   padding: 0;
   border: none;
-  border-radius: 4px;
   cursor: pointer;
   background: none;
 }
 
 .color-btn {
-  width: 25px;
-  height: 25px;
+  width: 20px;
+  height: 20px;
   border: 2px solid transparent; 
   border-radius: 50%;
   cursor: pointer;
-  transition: transform 0.1s, border 0.1s;
 }
-.color-btn:hover { transform: scale(1.2); border: 2px solid white; }
 
 .record-btn {
   background-color: #2a2a2a;
   color: white;
   border: 2px solid #ff4444;
-  padding: 8px 14px;
+  padding: 8px 12px;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: bold;
-  transition: all 0.2s;
 }
-.record-btn:hover { background-color: #ff4444; }
-.record-btn.recording { background-color: #ff4444; color: white; }
+.record-btn.recording { background-color: #ff4444; }
+
+#canvas-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-grow: 1;
+  width: 100%;
+}
+
+/* PORTRAIT LOCK OVERLAY */
+#portrait-warning {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; width: 100vw; height: 100vh;
+  background-color: #111;
+  z-index: 9999;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+.warning-content h2 { color: #ff4444; }
+.warning-content p { color: #ccc; font-size: 1.2rem; line-height: 1.5; }
+
+.mobile-only { display: none; }
+
+/* MOBILE RESPONSIVE RULES */
+@media screen and (max-width: 640px) {
+  .mobile-only { display: block; }
+}
+
+@media screen and (max-width: 640px) and (orientation: portrait) {
+  #app-container { display: none !important; }
+  #portrait-warning { display: flex; }
+}

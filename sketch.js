@@ -3,9 +3,17 @@ let video;
 let faces = [];
 let options = { maxFaces: 1, refineLandmarks: true, flipHorizontal: false };
 
+// Responsive Layout Variables
+let mode = 'desktop'; 
+let vidW = 640; // Native video widths (defaults)
+let vidH = 480;
+let panelW = 640; // Responsive rendered widths
+let panelH = 480;
+let showCamera = true;
+
 // Drawing & Smoothing
 let lerpSpeed = 0.2;   
-let pg; 
+let pg; // Internal Drawing Buffer (Locked to native video resolution)
 let isDrawing = false;
 let lerpNoseX = 0;
 let lerpNoseY = 0;
@@ -30,42 +38,49 @@ function preload() {
 }
 
 function setup() {
-  let cnv = createCanvas(1280, 480); 
+  let cnv = createCanvas(100, 100); // Temporary size, resized immediately
   cnv.parent('canvas-container');
 
-  video = createCapture(VIDEO);
-  video.size(640, 480);
-  video.hide();
+  // Request standard constraints like your reference code
+  let constraints = { video: { facingMode: "user" } };
   
-  pg = createGraphics(640, 480);
-  pg.clear();
+  video = createCapture(constraints, function() {
+    // Once video loads, extract its true aspect ratio & resolution
+    vidW = video.elt.videoWidth || 640;
+    vidH = video.elt.videoHeight || 480;
+    
+    // Create internal pristine buffer mapping directly to camera resolution
+    pg = createGraphics(vidW, vidH);
+    pg.clear();
+    
+    calculateLayout();
+    saveState();
+    faceMesh.detectStart(video, gotFaces);
+  });
+  video.hide();
 
-  saveState();
-  faceMesh.detectStart(video, gotFaces);
-
-  // Connect Core Buttons
+  // Connect Buttons
   document.getElementById('btn-undo').addEventListener('click', undoStroke);
   document.getElementById('btn-reset').addEventListener('click', () => {
-    pg.clear();
-    undoStack = [];
-    saveState();
+    pg.clear(); undoStack = []; saveState();
   });
   document.getElementById('btn-download').addEventListener('click', () => { save(pg, 'My-Drawing.png'); });
   document.getElementById('btn-eraser').addEventListener('click', () => { isErasing = true; });
 
-  // Connect Shape UI Buttons
-  let shapeButtons = document.querySelectorAll('.shape-btn');
-  shapeButtons.forEach((btn, index) => {
-    btn.addEventListener('click', () => {
-      shapeIndex = index;
-      updateShapeUI();
-    });
+  // Mobile Camera Toggle
+  document.getElementById('btn-toggle-cam').addEventListener('click', (e) => {
+    showCamera = !showCamera;
+    e.target.style.opacity = showCamera ? '1' : '0.5';
   });
 
-  // Color Pickers
+  // Shapes & Colors
+  let shapeButtons = document.querySelectorAll('.shape-btn');
+  shapeButtons.forEach((btn, index) => {
+    btn.addEventListener('click', () => { shapeIndex = index; updateShapeUI(); });
+  });
+
   document.getElementById('color-picker').addEventListener('input', (e) => {
-    isErasing = false;
-    currentColor = e.target.value;
+    isErasing = false; currentColor = e.target.value;
   });
 
   let colorButtons = document.querySelectorAll('.color-btn');
@@ -77,7 +92,7 @@ function setup() {
     });
   });
 
-  // Recording Setup (WebM)
+  // Record webm
   document.getElementById('btn-record').addEventListener('click', toggleRecord);
   let stream = document.querySelector('canvas').captureStream(30);
   mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
@@ -87,59 +102,73 @@ function setup() {
     let url = URL.createObjectURL(blob);
     let a = document.createElement('a');
     a.href = url;
-    a.download = 'My-HandsFree-Drawing.webm'; 
+    a.download = 'HandsFree-Drawing.webm'; 
     a.click();
     window.URL.revokeObjectURL(url);
     recordedChunks = [];
   };
 }
 
+// Dynamically scale mapping when browser size changes
+function windowResized() {
+  calculateLayout();
+}
+
+function calculateLayout() {
+  if (vidW === 0 || vidH === 0) return;
+  
+  let aspect = vidH / vidW;
+  let container = document.getElementById('canvas-container');
+  let availW = container.clientWidth;
+  let availH = container.clientHeight;
+
+  if (windowWidth <= 800) {
+    // MOBILE: Overlay
+    mode = 'mobile';
+    panelW = availW;
+    panelH = panelW * aspect;
+    if (panelH > availH) { panelH = availH; panelW = panelH / aspect; }
+    resizeCanvas(panelW, panelH);
+  } else if (windowWidth <= 1024) {
+    // TABLET: Stacked Vertically
+    mode = 'tablet';
+    panelW = availW;
+    panelH = panelW * aspect;
+    if (panelH * 2 > availH) { panelH = availH / 2; panelW = panelH / aspect; }
+    resizeCanvas(panelW, panelH * 2);
+  } else {
+    // DESKTOP: Side by Side
+    mode = 'desktop';
+    panelW = availW / 2;
+    panelH = panelW * aspect;
+    if (panelH > availH) { panelH = availH; panelW = panelH / aspect; }
+    resizeCanvas(panelW * 2, panelH);
+  }
+}
+
 function draw() {
   background(15); 
 
-  // LEFT SIDE
-  push();
-  translate(640, 0); 
-  scale(-1, 1);      
-  image(video, 0, 0, 640, 480);
-  pop();
-
-  // RIGHT SIDE
-  fill(30); 
-  noStroke();
-  rect(640, 0, 640, 480);
-  image(pg, 640, 0);
-
+  // Process Coordinates against native video buffer
   if (faces.length > 0) {
     let face = faces[0];
-
-    // Nose Position
-    let mirroredNoseX = 640 - face.keypoints[1].x; 
+    let mirroredNoseX = vidW - face.keypoints[1].x; 
     let noseY = face.keypoints[1].y;
     lerpNoseX = lerp(lerpNoseX, mirroredNoseX, lerpSpeed);
     lerpNoseY = lerp(lerpNoseY, noseY, lerpSpeed);
 
-    // Mouth Size
     let mouthSize = dist(face.keypoints[13].x, face.keypoints[13].y, face.keypoints[14].x, face.keypoints[14].y);
 
-    // DRAWING LOGIC
     if (isDrawing) {
       if (isErasing) {
-        pg.erase(); 
-        pg.stroke(255); 
-        pg.strokeWeight(mouthSize * 1.5); 
-        if (prevX !== undefined) {
-          pg.line(lerpNoseX, lerpNoseY, prevX, prevY);
-        }
+        pg.erase(); pg.stroke(255); pg.strokeWeight(mouthSize * 1.5); 
+        if (prevX !== undefined) pg.line(lerpNoseX, lerpNoseY, prevX, prevY);
         pg.noErase();
       } else {
-        pg.noStroke(); 
-        pg.fill(currentColor);
-        
+        pg.noStroke(); pg.fill(currentColor);
         if (prevX !== undefined) {
           let d = dist(prevX, prevY, lerpNoseX, lerpNoseY);
           let steps = Math.max(1, d / (mouthSize / 4)); 
-          
           for (let i = 0; i <= steps; i++) {
             let interX = lerp(prevX, lerpNoseX, i / steps);
             let interY = lerp(prevY, lerpNoseY, i / steps);
@@ -150,34 +179,73 @@ function draw() {
     }
     prevX = lerpNoseX;
     prevY = lerpNoseY;
+  }
 
-    // Cursors
-    fill(255, 0, 0);
-    noStroke();
-    circle(lerpNoseX, lerpNoseY, 8); 
-    
-    if (isErasing) {
-      fill(255); 
-      circle(640 + lerpNoseX, lerpNoseY, 8);
+  // --- RENDER LAYOUT MATRICES ---
+  if (mode === 'desktop') {
+    // LEFT: Video
+    push(); translate(panelW, 0); scale(-1, 1); image(video, 0, 0, panelW, panelH); pop();
+    // RIGHT: Canvas
+    fill(30); noStroke(); rect(panelW, 0, panelW, panelH); image(pg, panelW, 0, panelW, panelH);
+    // Draw Cursors mapped to layout
+    drawUIOverlay(0, 0); 
+    renderLiveCursors(0, 0, panelW, 0); 
+
+  } else if (mode === 'tablet') {
+    // TOP: Video
+    push(); translate(panelW, 0); scale(-1, 1); image(video, 0, 0, panelW, panelH); pop();
+    // BOTTOM: Canvas
+    fill(30); noStroke(); rect(0, panelH, panelW, panelH); image(pg, 0, panelH, panelW, panelH);
+    // Draw Cursors
+    drawUIOverlay(0, 0);
+    renderLiveCursors(0, 0, 0, panelH);
+
+  } else if (mode === 'mobile') {
+    // OVERLAY: Video behind Canvas
+    if (showCamera) {
+      push(); translate(panelW, 0); scale(-1, 1); image(video, 0, 0, panelW, panelH); pop();
     } else {
-      push();
-      translate(640, 0);
-      drawShapePreview(lerpNoseX, lerpNoseY, 20); 
-      pop();
+      fill(30); noStroke(); rect(0, 0, panelW, panelH);
     }
+    // Transparent layer to make canvas visible over feed
+    fill(0, 0, 0, 50); noStroke(); rect(0, 0, panelW, panelH);
+    image(pg, 0, 0, panelW, panelH);
+    
+    // Draw Cursors
+    drawUIOverlay(0, 0);
+    renderLiveCursors(0, 0, 0, 0); // No offset needed
   }
+}
 
-  // UI Text
-  fill(255);
-  textSize(16);
-  textAlign(LEFT, TOP);
-  text("Press SPACEBAR to Start/Stop Drawing", 15, 15); 
-  text(isDrawing ? "STATUS: 🟢 DRAWING" : "STATUS: 🔴 HOVERING", 15, 40);
+// Maps internal cursor locations to screen layout locations
+function renderLiveCursors(vidOffsetX, vidOffsetY, canvasOffsetX, canvasOffsetY) {
+  let scaleRatio = panelW / vidW;
+  let screenX = lerpNoseX * scaleRatio;
+  let screenY = lerpNoseY * scaleRatio;
   
-  if (isRecording) {
-    fill(255, 0, 0);
-    text("REC", 600, 15);
+  // Base Video Cursor (Red Dot)
+  fill(255, 0, 0); noStroke();
+  circle(screenX + vidOffsetX, screenY + vidOffsetY, 8);
+
+  // Brush Preview Cursor
+  push();
+  translate(screenX + canvasOffsetX, screenY + canvasOffsetY);
+  
+  if (isErasing) {
+    fill(255); noStroke(); circle(0, 0, 10);
+  } else {
+    // Scale shape visually for preview
+    scale(scaleRatio); 
+    drawShapePreview(0, 0, 20); 
   }
+  pop();
+}
+
+function drawUIOverlay(x, y) {
+  fill(255); textSize(14); textAlign(LEFT, TOP);
+  text("Tap SPACE to Draw", x + 10, y + 10); 
+  text(isDrawing ? "🟢 DRAWING" : "🔴 HOVERING", x + 10, y + 30);
+  if (isRecording) { fill(255, 0, 0); text("REC", panelW - 40, y + 10); }
 }
 
 function stampShape(x, y, size) {
@@ -185,23 +253,14 @@ function stampShape(x, y, size) {
   let activeShape = shapes[shapeIndex];
 
   if (activeShape === 'circle') {
-    pg.noStroke();
-    pg.circle(x, y, size);
+    pg.noStroke(); pg.circle(x, y, size);
   } else if (activeShape === 'rounded-square') {
-    pg.noStroke();
-    pg.rectMode(CENTER);
-    pg.rect(x, y, size, size, size * 0.25); 
+    pg.noStroke(); pg.rectMode(CENTER); pg.rect(x, y, size, size, size * 0.25); 
   } else if (activeShape === 'rounded-triangle') {
-    pg.push();
-    pg.strokeJoin(ROUND);
-    pg.strokeWeight(size * 0.3);
-    pg.stroke(currentColor);
-    pg.fill(currentColor);
-    pg.triangle(x, y - r, x - r, y + r, x + r, y + r);
-    pg.pop();
+    pg.push(); pg.strokeJoin(ROUND); pg.strokeWeight(size * 0.3); pg.stroke(currentColor); pg.fill(currentColor);
+    pg.triangle(x, y - r, x - r, y + r, x + r, y + r); pg.pop();
   } else if (activeShape === 'star') {
-    pg.noStroke();
-    drawStar(pg, x, y, size * 0.25, size * 0.6, 5); 
+    pg.noStroke(); drawStar(pg, x, y, size * 0.25, size * 0.6, 5); 
   }
 }
 
@@ -211,20 +270,14 @@ function drawShapePreview(x, y, size) {
   
   fill(currentColor);
   if (activeShape === 'circle') {
-    noStroke();
-    circle(x, y, size);
+    noStroke(); circle(x, y, size);
   } else if (activeShape === 'rounded-square') {
-    noStroke();
-    rectMode(CENTER);
-    rect(x, y, size, size, size * 0.25);
+    noStroke(); rectMode(CENTER); rect(x, y, size, size, size * 0.25);
   } else if (activeShape === 'rounded-triangle') {
-    strokeJoin(ROUND);
-    strokeWeight(size * 0.3);
-    stroke(currentColor);
+    strokeJoin(ROUND); strokeWeight(size * 0.3); stroke(currentColor);
     triangle(x, y - r, x - r, y + r, x + r, y + r);
   } else if (activeShape === 'star') {
-    noStroke();
-    drawStar(window, x, y, size * 0.25, size * 0.6, 5); 
+    noStroke(); drawStar(window, x, y, size * 0.25, size * 0.6, 5); 
   }
 }
 
@@ -233,12 +286,8 @@ function drawStar(ctx, x, y, radius1, radius2, npoints) {
   let halfAngle = angle / 2.0;
   ctx.beginShape();
   for (let a = -PI / 2; a < TWO_PI - PI / 2; a += angle) {
-    let sx = x + cos(a) * radius2;
-    let sy = y + sin(a) * radius2;
-    ctx.vertex(sx, sy);
-    sx = x + cos(a + halfAngle) * radius1;
-    sy = y + sin(a + halfAngle) * radius1;
-    ctx.vertex(sx, sy);
+    let sx = x + cos(a) * radius2; let sy = y + sin(a) * radius2; ctx.vertex(sx, sy);
+    sx = x + cos(a + halfAngle) * radius1; sy = y + sin(a + halfAngle) * radius1; ctx.vertex(sx, sy);
   }
   ctx.endShape(CLOSE);
 }
@@ -266,23 +315,17 @@ function saveState() {
 function undoStroke() {
   if (undoStack.length > 0) {
     let lastState = undoStack.pop();
-    pg.clear();
-    pg.image(lastState, 0, 0);
+    pg.clear(); pg.image(lastState, 0, 0);
   } else { pg.clear(); }
 }
 
 function toggleRecord() {
   let btnRecord = document.getElementById('btn-record');
   if (!isRecording) {
-    recordedChunks = [];
-    mediaRecorder.start();
-    isRecording = true;
-    btnRecord.innerText = '⬛ Stop & Save Video';
-    btnRecord.classList.add('recording');
+    recordedChunks = []; mediaRecorder.start(); isRecording = true;
+    btnRecord.innerText = '⬛ Stop Video'; btnRecord.classList.add('recording');
   } else {
-    mediaRecorder.stop();
-    isRecording = false;
-    btnRecord.innerText = '🔴 Record Video';
-    btnRecord.classList.remove('recording');
+    mediaRecorder.stop(); isRecording = false;
+    btnRecord.innerText = '🔴 Record Video'; btnRecord.classList.remove('recording');
   }
 }
