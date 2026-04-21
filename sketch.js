@@ -243,8 +243,6 @@ function renderLiveCursors(vidOffsetX, vidOffsetY, canvasOffsetX, canvasOffsetY)
 
 function drawUIOverlay(x, y) {
   fill(255); textSize(14); textAlign(LEFT, TOP);
-  text("Tap SPACE to Draw", x + 10, y + 10); 
-  text(isDrawing ? "🟢 DRAWING" : "🔴 HOVERING", x + 10, y + 30);
   if (isRecording) { fill(255, 0, 0); text("REC", panelW - 40, y + 10); }
 }
 
