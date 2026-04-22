@@ -21,10 +21,16 @@
 
   <div id="app-container">
     <div id="toolbar">
+      <button id="btn-mobile-draw" class="tool-btn mobile-only">🖌️ DRAW</button>
+      
+      <div class="instructions desktop-only">
+        <p>PRESS [SPACE] TO DRAW</p>
+      </div>
+
       <button id="btn-undo" class="tool-btn">↩ UNDO</button>
-      <button id="btn-reset" class="tool-btn danger-btn">CLEAR</button>
-      <button id="btn-eraser" class="tool-btn">ERASE</button>
-      <button id="btn-toggle-cam" class="tool-btn">CAMERA ON/OFF</button>
+      <button id="btn-reset" class="tool-btn danger-btn">🗑️ CLEAR</button>
+      <button id="btn-eraser" class="tool-btn">🧹 ERASE</button>
+      <button id="btn-toggle-cam" class="tool-btn">📷 CAMERA ON/OFF</button>
       
       <div class="shape-palette">
         <button class="shape-btn active" data-shape="circle">●</button>
@@ -34,8 +40,7 @@
       </div>
 
       <div class="color-palette">
-        <input type="color" id="color-picker" class="color-picker-input" value="#00FF00" title="Pick ANY color">
-        
+        <input type="color" id="color-picker" class="color-picker-input" value="#00FF00" title="PICK ANY COLOR">
         <button class="color-btn" style="background-color: #FF0000;" data-color="#FF0000"></button>
         <button class="color-btn" style="background-color: #FFA500;" data-color="#FFA500"></button>
         <button class="color-btn" style="background-color: #00FF00;" data-color="#00FF00"></button>
@@ -44,11 +49,8 @@
         <button class="color-btn" style="background-color: #FFFFFF;" data-color="#FFFFFF"></button>
       </div>
 
-      <div class="instructions">
-        <p>PRESS SPACE TO START/STOP DRAWING. Open your mouth to adjust the size of the brush.</p>
-      </div>
-      <button id="btn-download" class="tool-btn export-btn">💾 Save Image</button>
-      <button id="btn-record" class="record-btn">🔴 Record Video</button>
+      <button id="btn-download" class="tool-btn export-btn">💾 SAVE</button>
+      <button id="btn-record" class="record-btn">🔴 RECORD</button>
     </div>
 
     <div id="canvas-container">

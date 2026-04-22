@@ -1,177 +1,145 @@
 * { box-sizing: border-box; }
 
 body {
-  background-color: #1a1a1a;
+  background-color: #000;
   color: white;
   font-family: sans-serif;
   margin: 0;
   padding: 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  width: 100vw;
   height: 100vh;
   overflow: hidden; 
 }
 
 #app-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 100%;
-  height: 100%;
-  padding: 10px;
-  gap: 10px; 
+  position: relative;
+  width: 100vw;
+  height: 100vh;
 }
 
 #toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  background-color: #2a2a2a;
-  padding: 10px;
-  border-radius: 8px;
-  flex-wrap: wrap; 
-  width: 100%;
-  max-width: 1280px;
-}
-
-.tool-btn {
-  background-color: #444;
-  color: white;
-  border: none;
-  padding: 8px 12px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  transition: background-color 0.2s;
-}
-.tool-btn:hover { background-color: #666; }
-
-.danger-btn { border: 1px solid #ff4444; }
-.danger-btn:hover { background-color: #ff4444; }
-
-.export-btn { border: 1px solid #4CAF50; }
-.export-btn:hover { background-color: #4CAF50; }
-
-.shape-palette {
-  display: flex;
-  gap: 5px;
-  border-left: 2px solid #555;
-  border-right: 2px solid #555;
-  padding: 0 10px;
-}
-
-.shape-btn {
-  background-color: #333;
-  color: #ccc;
-  border: 1px solid #555;
-  padding: 6px 10px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-}
-.shape-btn.active {
-  background-color: #4CAF50;
-  color: white;
-  border-color: #4CAF50;
-  font-weight: bold;
-}
-
-.color-palette {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  border-right: 2px solid #555;
-  padding-right: 10px;
-}
-
-.color-picker-input {
-  width: 30px;
-  height: 30px;
-  padding: 0;
-  border: none;
-  cursor: pointer;
-  background: none;
-}
-
-.color-btn {
-  width: 24px;
-  height: 24px;
-  border: 2px solid transparent; 
-  border-radius: 50%;
-  cursor: pointer;
-}
-
-.instructions p {
-  font-size: 14px;
-  margin: 0;
-  color: #ddd;
-}
-
-.record-btn {
-  background-color: #2a2a2a;
-  color: white;
-  border: 2px solid #ff4444;
-  padding: 8px 12px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: bold;
-}
-.record-btn.recording { background-color: #ff4444; }
-
-/* THE NEW CONTAINER LOGIC */
-#canvas-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-grow: 1;
-  width: 100%;
-  background-color: #000;
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-#video-wrapper {
-  position: relative;
-  /* Width and Height are mathematically injected by JS */
-}
-
-/* Force both canvas and video to perfectly stretch over the wrapper */
-#video-wrapper canvas, #video-wrapper video {
   position: absolute;
   top: 0;
   left: 0;
-  width: 100% !important;
-  height: 100% !important;
+  height: 100vh;
+  width: 100px; 
+  background-color: rgba(20, 20, 20, 0.9); 
+  backdrop-filter: blur(10px);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 15px 5px;
+  overflow-y: auto;
+  border-right: 2px solid #333;
 }
 
-/* Ensure the stacking order is perfectly maintained */
-#video-wrapper video {
+.tool-btn {
+  background-color: #333;
+  color: white;
+  border: 1px solid #555;
+  padding: 10px 2px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: bold;
+  width: 90%;
+  text-align: center;
+}
+
+.danger-btn { border: 1px solid #ff4444; color: #ff4444; }
+.export-btn { border: 1px solid #4CAF50; color: #4CAF50; }
+
+.instructions p {
+  font-size: 10px;
+  text-align: center;
+  color: #888;
+  margin: 5px 0;
+  line-height: 1.2;
+}
+
+.shape-palette {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 0;
+  border-top: 1px solid #333;
+  border-bottom: 1px solid #333;
+  width: 100%;
+  align-items: center;
+}
+
+.shape-btn {
+  background-color: #222;
+  color: #fff;
+  border: 1px solid #444;
+  padding: 8px;
+  width: 40px;
+  height: 40px;
+  cursor: pointer;
+}
+.shape-btn.active { background-color: #4CAF50; border-color: #fff; }
+
+.color-palette {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.color-picker-input { width: 40px; height: 40px; border: none; cursor: pointer; background: none; }
+.color-btn { width: 30px; height: 30px; border-radius: 50%; border: 2px solid #444; cursor: pointer; }
+
+.record-btn {
+  background-color: #111;
+  color: #ff4444;
+  border: 2px solid #ff4444;
+  padding: 10px 2px;
+  width: 90%;
+  font-size: 11px;
+  font-weight: bold;
+}
+.record-btn.recording { background-color: #ff4444; color: white; }
+
+/* FULL SCREEN CANVAS LOGIC */
+#canvas-container {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
   z-index: 1;
-  transform: scaleX(-1); /* Mirror the video */
+  background-color: #000;
 }
 
-#video-wrapper canvas {
-  z-index: 2;
+#video-wrapper { position: relative; width: 100%; height: 100%; }
+#video-wrapper canvas, #video-wrapper video {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100% !important; height: 100% !important;
+  object-fit: cover; /* Ensures full screen fill */
+}
+#video-wrapper video { z-index: 1; transform: scaleX(-1); }
+#video-wrapper canvas { z-index: 2; }
+
+/* VISIBILITY LOGIC */
+.mobile-only { display: none !important; }
+.desktop-only { display: block; }
+
+@media screen and (max-width: 1024px) {
+  .mobile-only { display: block !important; }
+  .desktop-only { display: none !important; }
 }
 
 #portrait-warning {
   display: none;
   position: fixed;
   top: 0; left: 0; width: 100vw; height: 100vh;
-  background-color: #111;
+  background-color: #000;
   z-index: 9999;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
+  justify-content: center; align-items: center; text-align: center;
 }
 
-.warning-content h2 { color: #ff4444; }
-.warning-content p { color: #ccc; font-size: 1.2rem; line-height: 1.5; }
-
-@media screen and (max-width: 800px) and (orientation: portrait) {
+@media screen and (orientation: portrait) {
   #app-container { display: none !important; }
   #portrait-warning { display: flex; }
 }
