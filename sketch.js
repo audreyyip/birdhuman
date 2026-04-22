@@ -3,17 +3,13 @@ let video;
 let faces = [];
 let options = { maxFaces: 1, refineLandmarks: true, flipHorizontal: false };
 
-// Responsive Layout Variables
-let mode = 'desktop'; 
-let vidW = 640; // Native video widths (defaults)
+let vidW = 640; 
 let vidH = 480;
-let panelW = 640; // Responsive rendered widths
-let panelH = 480;
 let showCamera = true;
 
 // Drawing & Smoothing
 let lerpSpeed = 0.2;   
-let pg; // Internal Drawing Buffer (Locked to native video resolution)
+let pg; // Internal Drawing Buffer locked to native resolution
 let isDrawing = false;
 let lerpNoseX = 0;
 let lerpNoseY = 0;
@@ -30,7 +26,7 @@ let recordedChunks = [];
 let isRecording = false;
 
 // Shape Variables
-let shapes = ['circle', 'rounded-square', 'rounded-triangle', 'star'];
+let shapes = ['circle', 'square', 'triangle', 'star'];
 let shapeIndex = 0;
 
 function preload() {
@@ -38,28 +34,37 @@ function preload() {
 }
 
 function setup() {
-  let cnv = createCanvas(100, 100); // Temporary size, resized immediately
-  cnv.parent('canvas-container');
+  // Setup main canvas to strictly match native video specs
+  let cnv = createCanvas(vidW, vidH);
+  cnv.parent('video-wrapper'); // Attached to the new wrapper
 
-  // Request standard constraints like your reference code
-  let constraints = { video: { facingMode: "user" } };
-  
-  video = createCapture(constraints, function() {
-    // Once video loads, extract its true aspect ratio & resolution
+  // Setup internal, non-scaling buffer for pristine drawings
+  pg = createGraphics(vidW, vidH);
+  pg.clear();
+
+  let constraints = { audio: false, video: { facingMode: "user" } };
+  video = createCapture(constraints);
+  video.parent('video-wrapper'); // Attached to the new wrapper
+  video.elt.setAttribute('playsinline', '');
+
+  video.elt.addEventListener('loadedmetadata', () => {
+    // 1. Lock in the EXACT native resolution of the camera
     vidW = video.elt.videoWidth || 640;
     vidH = video.elt.videoHeight || 480;
     
-    // Create internal pristine buffer mapping directly to camera resolution
-    pg = createGraphics(vidW, vidH);
+    // 2. Resize internal canvas/buffer to match native specs
+    resizeCanvas(vidW, vidH);
+    pg.resizeCanvas(vidW, vidH);
     pg.clear();
     
+    // 3. Stretch the wrapper visually so everything stays perfectly aligned
     calculateLayout();
+    
     saveState();
     faceMesh.detectStart(video, gotFaces);
   });
-  video.hide();
 
-  // Connect Buttons
+  // UI Event Listeners
   document.getElementById('btn-undo').addEventListener('click', undoStroke);
   document.getElementById('btn-reset').addEventListener('click', () => {
     pg.clear(); undoStack = []; saveState();
@@ -67,13 +72,12 @@ function setup() {
   document.getElementById('btn-download').addEventListener('click', () => { save(pg, 'My-Drawing.png'); });
   document.getElementById('btn-eraser').addEventListener('click', () => { isErasing = true; });
 
-  // Mobile Camera Toggle
   document.getElementById('btn-toggle-cam').addEventListener('click', (e) => {
     showCamera = !showCamera;
+    video.style('opacity', showCamera ? '1' : '0');
     e.target.style.opacity = showCamera ? '1' : '0.5';
   });
 
-  // Shapes & Colors
   let shapeButtons = document.querySelectorAll('.shape-btn');
   shapeButtons.forEach((btn, index) => {
     btn.addEventListener('click', () => { shapeIndex = index; updateShapeUI(); });
@@ -92,7 +96,7 @@ function setup() {
     });
   });
 
-  // Record webm
+  // Record Setup
   document.getElementById('btn-record').addEventListener('click', toggleRecord);
   let stream = document.querySelector('canvas').captureStream(30);
   mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
@@ -109,7 +113,7 @@ function setup() {
   };
 }
 
-// Dynamically scale mapping when browser size changes
+// Calculate the visual stretch size of the wrapper (Not internal canvas size)
 function windowResized() {
   calculateLayout();
 }
@@ -117,41 +121,34 @@ function windowResized() {
 function calculateLayout() {
   if (vidW === 0 || vidH === 0) return;
   
-  let aspect = vidH / vidW;
   let container = document.getElementById('canvas-container');
+  let wrapper = document.getElementById('video-wrapper');
+  
   let availW = container.clientWidth;
   let availH = container.clientHeight;
-
-  if (windowWidth <= 800) {
-    // MOBILE: Overlay
-    mode = 'mobile';
-    panelW = availW;
-    panelH = panelW * aspect;
-    if (panelH > availH) { panelH = availH; panelW = panelH / aspect; }
-    resizeCanvas(panelW, panelH);
-  } else if (windowWidth <= 1024) {
-    // TABLET: Stacked Vertically
-    mode = 'tablet';
-    panelW = availW;
-    panelH = panelW * aspect;
-    if (panelH * 2 > availH) { panelH = availH / 2; panelW = panelH / aspect; }
-    resizeCanvas(panelW, panelH * 2);
-  } else {
-    // DESKTOP: Side by Side
-    mode = 'desktop';
-    panelW = availW / 2;
-    panelH = panelW * aspect;
-    if (panelH > availH) { panelH = availH; panelW = panelH / aspect; }
-    resizeCanvas(panelW * 2, panelH);
+  let aspect = vidW / vidH;
+  
+  let targetW = availW;
+  let targetH = targetW / aspect;
+  
+  if (targetH > availH) {
+    targetH = availH;
+    targetW = targetH * aspect;
   }
+  
+  // Force the wrapper container to fit the screen exactly
+  // The CSS handles stretching the canvas/video to match it
+  wrapper.style.width = targetW + 'px';
+  wrapper.style.height = targetH + 'px';
 }
 
 function draw() {
-  background(15); 
+  clear(); // Keep main canvas transparent so video shows underneath
 
-  // Process Coordinates against native video buffer
   if (faces.length > 0) {
     let face = faces[0];
+    
+    // Pure, unmodified coordinates
     let mirroredNoseX = vidW - face.keypoints[1].x; 
     let noseY = face.keypoints[1].y;
     lerpNoseX = lerp(lerpNoseX, mirroredNoseX, lerpSpeed);
@@ -181,69 +178,37 @@ function draw() {
     prevY = lerpNoseY;
   }
 
-  // --- RENDER LAYOUT MATRICES ---
-  if (mode === 'desktop') {
-    // LEFT: Video
-    push(); translate(panelW, 0); scale(-1, 1); image(video, 0, 0, panelW, panelH); pop();
-    // RIGHT: Canvas
-    fill(30); noStroke(); rect(panelW, 0, panelW, panelH); image(pg, panelW, 0, panelW, panelH);
-    // Draw Cursors mapped to layout
-    drawUIOverlay(0, 0); 
-    renderLiveCursors(0, 0, panelW, 0); 
+  // Tint over video for contrast
+  if (showCamera) {
+    fill(0, 0, 0, 80);
+    rect(0, 0, vidW, vidH);
+  }
 
-  } else if (mode === 'tablet') {
-    // TOP: Video
-    push(); translate(panelW, 0); scale(-1, 1); image(video, 0, 0, panelW, panelH); pop();
-    // BOTTOM: Canvas
-    fill(30); noStroke(); rect(0, panelH, panelW, panelH); image(pg, 0, panelH, panelW, panelH);
-    // Draw Cursors
-    drawUIOverlay(0, 0);
-    renderLiveCursors(0, 0, 0, panelH);
+  // Draw the internal drawing buffer naturally
+  image(pg, 0, 0);
 
-  } else if (mode === 'mobile') {
-    // OVERLAY: Video behind Canvas
-    if (showCamera) {
-      push(); translate(panelW, 0); scale(-1, 1); image(video, 0, 0, panelW, panelH); pop();
+  // Draw the live cursors exactly where the tracking says
+  if (faces.length > 0) {
+    // Re-calculate mouth size purely for the cursor display
+    let mouthSize = dist(faces[0].keypoints[13].x, faces[0].keypoints[13].y, faces[0].keypoints[14].x, faces[0].keypoints[14].y);
+
+    fill(255, 0, 0); noStroke();
+    circle(lerpNoseX, lerpNoseY, 8);
+
+    push();
+    translate(lerpNoseX, lerpNoseY);
+    if (isErasing) {
+      fill(255); noStroke(); circle(0, 0, 10);
     } else {
-      fill(30); noStroke(); rect(0, 0, panelW, panelH);
+      drawShapePreview(0, 0, mouthSize); 
     }
-    // Transparent layer to make canvas visible over feed
-    fill(0, 0, 0, 50); noStroke(); rect(0, 0, panelW, panelH);
-    image(pg, 0, 0, panelW, panelH);
-    
-    // Draw Cursors
-    drawUIOverlay(0, 0);
-    renderLiveCursors(0, 0, 0, 0); // No offset needed
+    pop();
   }
-}
-
-// Maps internal cursor locations to screen layout locations
-function renderLiveCursors(vidOffsetX, vidOffsetY, canvasOffsetX, canvasOffsetY) {
-  let scaleRatio = panelW / vidW;
-  let screenX = lerpNoseX * scaleRatio;
-  let screenY = lerpNoseY * scaleRatio;
   
-  // Base Video Cursor (Red Dot)
-  fill(255, 0, 0); noStroke();
-  circle(screenX + vidOffsetX, screenY + vidOffsetY, 8);
-
-  // Brush Preview Cursor
-  push();
-  translate(screenX + canvasOffsetX, screenY + canvasOffsetY);
-  
-  if (isErasing) {
-    fill(255); noStroke(); circle(0, 0, 10);
-  } else {
-    // Scale shape visually for preview
-    scale(scaleRatio); 
-    drawShapePreview(0, 0, 20); 
-  }
-  pop();
-}
-
-function drawUIOverlay(x, y) {
-  fill(255); textSize(14); textAlign(LEFT, TOP);
-  if (isRecording) { fill(255, 0, 0); text("REC", panelW - 40, y + 10); }
+  // UI Status
+  fill(255); textSize(18); textAlign(LEFT, TOP);
+  text(isDrawing ? "🟢 DRAWING" : "🔴 HOVERING", 10, 10);
+  if (isRecording) { fill(255, 0, 0); text("REC", vidW - 50, 10); }
 }
 
 function stampShape(x, y, size) {
@@ -252,10 +217,10 @@ function stampShape(x, y, size) {
 
   if (activeShape === 'circle') {
     pg.noStroke(); pg.circle(x, y, size);
-  } else if (activeShape === 'rounded-square') {
-    pg.noStroke(); pg.rectMode(CENTER); pg.rect(x, y, size, size, size * 0.25); 
-  } else if (activeShape === 'rounded-triangle') {
-    pg.push(); pg.strokeJoin(ROUND); pg.strokeWeight(size * 0.3); pg.stroke(currentColor); pg.fill(currentColor);
+  } else if (activeShape === 'square') {
+    pg.noStroke(); pg.rectMode(CENTER); pg.rect(x, y, size, size); 
+  } else if (activeShape === 'triangle') {
+    pg.push(); pg.strokeJoin(MITER); pg.strokeWeight(size * 0.1); pg.stroke(currentColor); pg.fill(currentColor);
     pg.triangle(x, y - r, x - r, y + r, x + r, y + r); pg.pop();
   } else if (activeShape === 'star') {
     pg.noStroke(); drawStar(pg, x, y, size * 0.25, size * 0.6, 5); 
@@ -269,10 +234,10 @@ function drawShapePreview(x, y, size) {
   fill(currentColor);
   if (activeShape === 'circle') {
     noStroke(); circle(x, y, size);
-  } else if (activeShape === 'rounded-square') {
-    noStroke(); rectMode(CENTER); rect(x, y, size, size, size * 0.25);
-  } else if (activeShape === 'rounded-triangle') {
-    strokeJoin(ROUND); strokeWeight(size * 0.3); stroke(currentColor);
+  } else if (activeShape === 'square') {
+    noStroke(); rectMode(CENTER); rect(x, y, size, size);
+  } else if (activeShape === 'triangle') {
+    strokeJoin(MITER); strokeWeight(size * 0.1); stroke(currentColor);
     triangle(x, y - r, x - r, y + r, x + r, y + r);
   } else if (activeShape === 'star') {
     noStroke(); drawStar(window, x, y, size * 0.25, size * 0.6, 5); 
@@ -293,7 +258,9 @@ function drawStar(ctx, x, y, radius1, radius2, npoints) {
 function updateShapeUI() {
   let shapeButtons = document.querySelectorAll('.shape-btn');
   shapeButtons.forEach(btn => btn.classList.remove('active'));
-  shapeButtons[shapeIndex].classList.add('active');
+  if (shapeButtons[shapeIndex]) {
+    shapeButtons[shapeIndex].classList.add('active');
+  }
 }
 
 function gotFaces(results) { faces = results; }

@@ -10,7 +10,7 @@ body {
   justify-content: center;
   align-items: center;
   height: 100vh;
-  overflow: hidden; /* Prevents scroll bounce on mobile */
+  overflow: hidden; 
 }
 
 #app-container {
@@ -43,7 +43,7 @@ body {
   padding: 8px 12px;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 13px;
+  font-size: 14px;
   transition: background-color 0.2s;
 }
 .tool-btn:hover { background-color: #666; }
@@ -66,10 +66,10 @@ body {
   background-color: #333;
   color: #ccc;
   border: 1px solid #555;
-  padding: 6px 8px;
+  padding: 6px 10px;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 12px;
+  font-size: 14px;
 }
 .shape-btn.active {
   background-color: #4CAF50;
@@ -96,11 +96,17 @@ body {
 }
 
 .color-btn {
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
   border: 2px solid transparent; 
   border-radius: 50%;
   cursor: pointer;
+}
+
+.instructions p {
+  font-size: 14px;
+  margin: 0;
+  color: #ddd;
 }
 
 .record-btn {
@@ -110,20 +116,47 @@ body {
   padding: 8px 12px;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: bold;
 }
 .record-btn.recording { background-color: #ff4444; }
 
+/* THE NEW CONTAINER LOGIC */
 #canvas-container {
   display: flex;
   justify-content: center;
   align-items: center;
   flex-grow: 1;
   width: 100%;
+  background-color: #000;
+  border-radius: 8px;
+  overflow: hidden;
 }
 
-/* PORTRAIT LOCK OVERLAY */
+#video-wrapper {
+  position: relative;
+  /* Width and Height are mathematically injected by JS */
+}
+
+/* Force both canvas and video to perfectly stretch over the wrapper */
+#video-wrapper canvas, #video-wrapper video {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Ensure the stacking order is perfectly maintained */
+#video-wrapper video {
+  z-index: 1;
+  transform: scaleX(-1); /* Mirror the video */
+}
+
+#video-wrapper canvas {
+  z-index: 2;
+}
+
 #portrait-warning {
   display: none;
   position: fixed;
@@ -138,14 +171,7 @@ body {
 .warning-content h2 { color: #ff4444; }
 .warning-content p { color: #ccc; font-size: 1.2rem; line-height: 1.5; }
 
-.mobile-only { display: none; }
-
-/* MOBILE RESPONSIVE RULES */
-@media screen and (max-width: 640px) {
-  .mobile-only { display: block; }
-}
-
-@media screen and (max-width: 640px) and (orientation: portrait) {
+@media screen and (max-width: 800px) and (orientation: portrait) {
   #app-container { display: none !important; }
   #portrait-warning { display: flex; }
 }

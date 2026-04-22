@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Hands-Free Drawing Game</title>
+  <title>PAINT LIKE POLLOCK</title>
   
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
   <script src="https://unpkg.com/ml5@1/dist/ml5.min.js"></script>
@@ -14,22 +14,22 @@
 
   <div id="portrait-warning">
     <div class="warning-content">
-      <h2>📱 Rotate Your Device</h2>
+      <h2>ROTATE YOUR DEVICE</h2>
       <p>This drawing tool requires a Landscape view.<br>Please turn your phone sideways to continue.</p>
     </div>
   </div>
 
   <div id="app-container">
     <div id="toolbar">
-      <button id="btn-undo" class="tool-btn">↩ Undo</button>
-      <button id="btn-reset" class="tool-btn danger-btn">🗑️ Reset</button>
-      <button id="btn-eraser" class="tool-btn">Eraser</button>
-      <button id="btn-toggle-cam" class="tool-btn mobile-only">📷 Toggle Camera</button>
+      <button id="btn-undo" class="tool-btn">↩ UNDO</button>
+      <button id="btn-reset" class="tool-btn danger-btn">CLEAR</button>
+      <button id="btn-eraser" class="tool-btn">ERASE</button>
+      <button id="btn-toggle-cam" class="tool-btn">CAMERA ON/OFF</button>
       
       <div class="shape-palette">
         <button class="shape-btn active" data-shape="circle">●</button>
-        <button class="shape-btn" data-shape="rounded-square">■</button>
-        <button class="shape-btn" data-shape="rounded-triangle">▲</button>
+        <button class="shape-btn" data-shape="square">■</button>
+        <button class="shape-btn" data-shape="triangle">▲</button>
         <button class="shape-btn" data-shape="star">★</button>
       </div>
 
@@ -40,18 +40,20 @@
         <button class="color-btn" style="background-color: #FFA500;" data-color="#FFA500"></button>
         <button class="color-btn" style="background-color: #00FF00;" data-color="#00FF00"></button>
         <button class="color-btn" style="background-color: #0000FF;" data-color="#0000FF"></button>
-        <button class="color-btn" style="background-color: #a200ff;" data-color="#0000FF"></button>
+        <button class="color-btn" style="background-color: #a200ff;" data-color="#a200ff"></button>
         <button class="color-btn" style="background-color: #FFFFFF;" data-color="#FFFFFF"></button>
       </div>
 
-      <div class ="instructions">
-        <p>Press SPACE to start or stop drawing. Open your mouth to move the brush and adjust the size of the brush.</p>
-        </div>
+      <div class="instructions">
+        <p>SPACE TO START/STOP DRAWING. Open your mouth to adjust the size of the brush.</p>
+      </div>
       <button id="btn-download" class="tool-btn export-btn">💾 Save Image</button>
       <button id="btn-record" class="record-btn">🔴 Record Video</button>
     </div>
 
-    <div id="canvas-container"></div>
+    <div id="canvas-container">
+      <div id="video-wrapper"></div>
+    </div>
   </div>
 
   <script src="sketch.js"></script>
