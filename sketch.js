@@ -30,18 +30,35 @@ function preload() {
 }
 
 function setup() {
+  // 1. Detect if the user is on mobile
+  let isMobile = window.innerWidth <= 1024 || /Mobi|Android/i.test(navigator.userAgent);
+
+  // 2. Adjust video constraints to force portrait on mobile, landscape on desktop
+  let videoConstraints = {
+    facingMode: "user"
+  };
+
+  if (isMobile) {
+    videoConstraints.width = { ideal: 480 };  // Narrow width
+    videoConstraints.height = { ideal: 640 }; // Tall height
+  } else {
+    videoConstraints.width = { ideal: 640 };  // Wide width
+    videoConstraints.height = { ideal: 480 }; // Short height
+  }
+
   let cnv = createCanvas(vidW, vidH);
   cnv.parent('video-wrapper'); 
 
   pg = createGraphics(vidW, vidH);
   pg.clear();
 
-  let constraints = { audio: false, video: { facingMode: "user" } };
+  let constraints = { audio: false, video: videoConstraints };
   video = createCapture(constraints);
   video.parent('video-wrapper'); 
   video.elt.setAttribute('playsinline', '');
 
   video.elt.addEventListener('loadedmetadata', () => {
+    // This dynamically adopts whatever orientation the camera gives us
     vidW = video.elt.videoWidth || 640;
     vidH = video.elt.videoHeight || 480;
     
@@ -224,15 +241,12 @@ function gotFaces(results) { faces = results; }
 function toggleDrawing() {
   isDrawing = !isDrawing;
   
-  // Hide the big intro text permanently once they start
   let intro = document.getElementById('intro-overlay');
   if (intro) intro.style.display = 'none';
 
-  // Update Status Indicator
   let statusText = document.getElementById('status-indicator');
   if (statusText) statusText.innerText = isDrawing ? "🟢 DRAWING" : "🔴 HOVERING";
 
-  // Update Mobile Button styling
   let btn = document.getElementById('btn-mobile-draw');
   btn.style.backgroundColor = isDrawing ? "#4CAF50" : "#222";
   
@@ -246,14 +260,19 @@ function undoStroke() { if (undoStack.length > 0) { let lastState = undoStack.po
 function toggleRecord() {
   let btnRecord = document.getElementById('btn-record');
   let recIndicator = document.getElementById('record-indicator');
+  
+  // Grab the image tag inside the record button so we don't accidentally delete it when changing text
+  let imgTag = '<img src="icon-record.png" alt="Record" class="btn-icon" id="record-icon-img">';
 
   if (!isRecording) {
     recordedChunks = []; mediaRecorder.start(); isRecording = true;
-    btnRecord.innerText = '⬛ STOP'; btnRecord.classList.add('recording');
+    btnRecord.innerHTML = imgTag + ' STOP'; 
+    btnRecord.classList.add('recording');
     if (recIndicator) recIndicator.style.display = 'block';
   } else {
     mediaRecorder.stop(); isRecording = false;
-    btnRecord.innerText = '🔴 RECORD'; btnRecord.classList.remove('recording');
+    btnRecord.innerHTML = imgTag + ' RECORD'; 
+    btnRecord.classList.remove('recording');
     if (recIndicator) recIndicator.style.display = 'none';
   }
 }

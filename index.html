@@ -12,13 +12,6 @@
 </head>
 <body>
 
-  <div id="portrait-warning">
-    <div class="warning-content">
-      <h2>ROTATE YOUR DEVICE</h2>
-      <p>This drawing tool requires a Landscape view.<br>Please turn your phone sideways to continue.</p>
-    </div>
-  </div>
-
   <div id="app-container">
     
     <div id="status-indicator">🔴 HOVERING</div>
@@ -29,21 +22,35 @@
     </div>
 
     <div id="toolbar">
-      <button id="btn-mobile-draw" class="tool-btn mobile-only active-draw-btn">🖌️ DRAW</button>
+      <button id="btn-mobile-draw" class="tool-btn mobile-only active-draw-btn">
+        <img src="icon-draw.png" alt="Draw" class="btn-icon"> DRAW
+      </button>
       
       <div class="instructions desktop-only">
         <p>PRESS [SPACE] TO DRAW</p>
       </div>
 
-      <button class="accordion">🛠️ TOOLS</button>
+      <button class="accordion">
+        <img src="icon-tools.png" alt="Tools" class="btn-icon"> TOOLS
+      </button>
       <div class="panel" style="display: flex;">
-        <button id="btn-undo" class="tool-btn">↩ UNDO</button>
-        <button id="btn-reset" class="tool-btn danger-btn">🗑️ CLEAR</button>
-        <button id="btn-eraser" class="tool-btn">🧹 ERASE</button>
-        <button id="btn-toggle-cam" class="tool-btn">📷 CAMERA</button>
+        <button id="btn-undo" class="tool-btn">
+          <img src="icon-undo.png" alt="Undo" class="btn-icon"> UNDO
+        </button>
+        <button id="btn-reset" class="tool-btn danger-btn">
+          <img src="icon-clear.png" alt="Clear" class="btn-icon"> CLEAR
+        </button>
+        <button id="btn-eraser" class="tool-btn">
+          <img src="icon-erase.png" alt="Erase" class="btn-icon"> ERASE
+        </button>
+        <button id="btn-toggle-cam" class="tool-btn">
+          <img src="icon-camera.png" alt="Camera" class="btn-icon"> CAMERA
+        </button>
       </div>
 
-      <button class="accordion">💠 SHAPES</button>
+      <button class="accordion">
+        <img src="icon-shapes.png" alt="Shapes" class="btn-icon"> SHAPES
+      </button>
       <div class="panel">
         <div class="shape-palette">
           <button class="shape-btn active" data-shape="circle">●</button>
@@ -53,7 +60,9 @@
         </div>
       </div>
 
-      <button class="accordion">🎨 COLORS</button>
+      <button class="accordion">
+        <img src="icon-colors.png" alt="Colors" class="btn-icon"> COLORS
+      </button>
       <div class="panel">
         <div class="color-palette">
           <input type="color" id="color-picker" class="color-picker-input" value="#00FF00" title="PICK ANY COLOR">
@@ -66,10 +75,16 @@
         </div>
       </div>
 
-      <button class="accordion">💾 EXPORT</button>
+      <button class="accordion">
+        <img src="icon-export.png" alt="Export" class="btn-icon"> EXPORT
+      </button>
       <div class="panel">
-        <button id="btn-download" class="tool-btn export-btn">💾 SAVE</button>
-        <button id="btn-record" class="record-btn">🔴 RECORD</button>
+        <button id="btn-download" class="tool-btn export-btn">
+          <img src="icon-save.png" alt="Save" class="btn-icon"> SAVE
+        </button>
+        <button id="btn-record" class="record-btn">
+          <img src="icon-record.png" alt="Record" class="btn-icon" id="record-icon-img"> RECORD
+        </button>
       </div>
 
     </div>

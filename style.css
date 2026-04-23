@@ -45,7 +45,7 @@ body {
   font-weight: bold;
   z-index: 1000;
   pointer-events: none;
-  display: none; /* Hidden by default */
+  display: none; 
 }
 
 #intro-overlay {
@@ -59,7 +59,7 @@ body {
   font-weight: bold;
   text-shadow: 4px 4px 15px rgba(0,0,0,0.9);
   z-index: 1000;
-  pointer-events: none; /* Allows clicks to pass through to the canvas/sidebar */
+  pointer-events: none; 
 }
 /* ----------------------- */
 
@@ -81,6 +81,15 @@ body {
   overflow-y: auto;
   overflow-x: hidden;
   border-right: 2px solid #333;
+}
+
+/* --- ICON STYLING --- */
+.btn-icon {
+  width: 14px;
+  height: 14px;
+  vertical-align: middle;
+  margin-right: 4px;
+  display: inline-block;
 }
 
 .accordion {
@@ -122,6 +131,9 @@ body {
   font-weight: bold;
   width: 90%;
   text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .active-draw-btn {
@@ -181,6 +193,9 @@ body {
   font-size: 11px;
   font-weight: bold;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .record-btn.recording { background-color: #ff4444; color: white; }
 
@@ -207,27 +222,12 @@ body {
 .desktop-only { display: inline-block; }
 
 @media screen and (max-width: 1024px) {
-  .mobile-only { display: inline-block !important; } /* Uses inline-block so it fits in the text sentence */
+  .mobile-only { display: inline-block !important; } 
   .desktop-only { display: none !important; }
-  #intro-overlay { font-size: 6vw; } /* Slightly bigger on mobile */
+  #intro-overlay { font-size: 6vw; } 
 }
 
-/* Force block display specifically for the mobile draw button */
 button.mobile-only { display: none !important; }
 @media screen and (max-width: 1024px) {
-  button.mobile-only { display: block !important; }
-}
-
-#portrait-warning {
-  display: none;
-  position: fixed;
-  top: 0; left: 0; width: 100vw; height: 100vh;
-  background-color: #000;
-  z-index: 10000;
-  justify-content: center; align-items: center; text-align: center;
-}
-
-@media screen and (orientation: portrait) {
-  #app-container { display: none !important; }
-  #portrait-warning { display: flex; }
+  button.mobile-only { display: flex !important; } /* Flex keeps the image and text aligned */
 }
