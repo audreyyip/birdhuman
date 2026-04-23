@@ -54,6 +54,19 @@ function setup() {
     faceMesh.detectStart(video, gotFaces);
   });
 
+  let acc = document.getElementsByClassName("accordion");
+  for (let i = 0; i < acc.length; i++) {
+    acc[i].addEventListener("click", function() {
+      this.classList.toggle("active");
+      let panel = this.nextElementSibling;
+      if (panel.style.display === "flex") {
+        panel.style.display = "none";
+      } else {
+        panel.style.display = "flex";
+      }
+    });
+  }
+
   document.getElementById('btn-undo').addEventListener('click', undoStroke);
   document.getElementById('btn-reset').addEventListener('click', () => {
     pg.clear(); undoStack = []; saveState();
@@ -61,7 +74,11 @@ function setup() {
   document.getElementById('btn-download').addEventListener('click', () => { save(pg, 'POLLOCK-ART.png'); });
   document.getElementById('btn-eraser').addEventListener('click', () => { isErasing = !isErasing; });
 
-  document.getElementById('btn-mobile-draw').addEventListener('click', toggleDrawing);
+  let drawBtn = document.getElementById('btn-mobile-draw');
+  drawBtn.addEventListener('pointerdown', (e) => {
+    e.preventDefault(); 
+    toggleDrawing();
+  });
 
   document.getElementById('btn-toggle-cam').addEventListener('click', (e) => {
     showCamera = !showCamera;
@@ -164,11 +181,6 @@ function draw() {
     }
     pop();
   }
-  
-  // UI STATUS (OFFSET BY 110PX TO CLEAR SIDEBAR)
-  fill(255); textSize(14); textAlign(LEFT, TOP); textFont('monospace');
-  text(isDrawing ? "STATUS: DRAWING" : "STATUS: HOVERING", 110, 20);
-  if (isRecording) { fill(255, 0, 0); text("● REC", 110, 40); }
 }
 
 function stampShape(x, y, size) {
@@ -211,8 +223,19 @@ function gotFaces(results) { faces = results; }
 
 function toggleDrawing() {
   isDrawing = !isDrawing;
+  
+  // Hide the big intro text permanently once they start
+  let intro = document.getElementById('intro-overlay');
+  if (intro) intro.style.display = 'none';
+
+  // Update Status Indicator
+  let statusText = document.getElementById('status-indicator');
+  if (statusText) statusText.innerText = isDrawing ? "🟢 DRAWING" : "🔴 HOVERING";
+
+  // Update Mobile Button styling
   let btn = document.getElementById('btn-mobile-draw');
-  btn.style.backgroundColor = isDrawing ? "#4CAF50" : "#333";
+  btn.style.backgroundColor = isDrawing ? "#4CAF50" : "#222";
+  
   if (isDrawing) { saveState(); prevX = undefined; }
 }
 
@@ -222,11 +245,15 @@ function undoStroke() { if (undoStack.length > 0) { let lastState = undoStack.po
 
 function toggleRecord() {
   let btnRecord = document.getElementById('btn-record');
+  let recIndicator = document.getElementById('record-indicator');
+
   if (!isRecording) {
     recordedChunks = []; mediaRecorder.start(); isRecording = true;
     btnRecord.innerText = '⬛ STOP'; btnRecord.classList.add('recording');
+    if (recIndicator) recIndicator.style.display = 'block';
   } else {
     mediaRecorder.stop(); isRecording = false;
     btnRecord.innerText = '🔴 RECORD'; btnRecord.classList.remove('recording');
+    if (recIndicator) recIndicator.style.display = 'none';
   }
 }

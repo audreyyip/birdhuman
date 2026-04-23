@@ -20,37 +20,58 @@
   </div>
 
   <div id="app-container">
+    
+    <div id="status-indicator">🔴 HOVERING</div>
+    <div id="record-indicator">● REC</div>
+
+    <div id="intro-overlay">
+      <span class="desktop-only">PRESS [SPACE]</span><span class="mobile-only">TAP [DRAW]</span> + OPEN YOUR MOUTH TO DRAW
+    </div>
+
     <div id="toolbar">
-      <button id="btn-mobile-draw" class="tool-btn mobile-only">🖌️ DRAW</button>
+      <button id="btn-mobile-draw" class="tool-btn mobile-only active-draw-btn">🖌️ DRAW</button>
       
       <div class="instructions desktop-only">
         <p>PRESS [SPACE] TO DRAW</p>
       </div>
 
-      <button id="btn-undo" class="tool-btn">↩ UNDO</button>
-      <button id="btn-reset" class="tool-btn danger-btn">🗑️ CLEAR</button>
-      <button id="btn-eraser" class="tool-btn">🧹 ERASE</button>
-      <button id="btn-toggle-cam" class="tool-btn">📷 CAMERA ON/OFF</button>
-      
-      <div class="shape-palette">
-        <button class="shape-btn active" data-shape="circle">●</button>
-        <button class="shape-btn" data-shape="square">■</button>
-        <button class="shape-btn" data-shape="triangle">▲</button>
-        <button class="shape-btn" data-shape="star">★</button>
+      <button class="accordion">🛠️ TOOLS</button>
+      <div class="panel" style="display: flex;">
+        <button id="btn-undo" class="tool-btn">↩ UNDO</button>
+        <button id="btn-reset" class="tool-btn danger-btn">🗑️ CLEAR</button>
+        <button id="btn-eraser" class="tool-btn">🧹 ERASE</button>
+        <button id="btn-toggle-cam" class="tool-btn">📷 CAMERA</button>
       </div>
 
-      <div class="color-palette">
-        <input type="color" id="color-picker" class="color-picker-input" value="#00FF00" title="PICK ANY COLOR">
-        <button class="color-btn" style="background-color: #FF0000;" data-color="#FF0000"></button>
-        <button class="color-btn" style="background-color: #FFA500;" data-color="#FFA500"></button>
-        <button class="color-btn" style="background-color: #00FF00;" data-color="#00FF00"></button>
-        <button class="color-btn" style="background-color: #0000FF;" data-color="#0000FF"></button>
-        <button class="color-btn" style="background-color: #a200ff;" data-color="#a200ff"></button>
-        <button class="color-btn" style="background-color: #FFFFFF;" data-color="#FFFFFF"></button>
+      <button class="accordion">💠 SHAPES</button>
+      <div class="panel">
+        <div class="shape-palette">
+          <button class="shape-btn active" data-shape="circle">●</button>
+          <button class="shape-btn" data-shape="square">■</button>
+          <button class="shape-btn" data-shape="triangle">▲</button>
+          <button class="shape-btn" data-shape="star">★</button>
+        </div>
       </div>
 
-      <button id="btn-download" class="tool-btn export-btn">💾 SAVE</button>
-      <button id="btn-record" class="record-btn">🔴 RECORD</button>
+      <button class="accordion">🎨 COLORS</button>
+      <div class="panel">
+        <div class="color-palette">
+          <input type="color" id="color-picker" class="color-picker-input" value="#00FF00" title="PICK ANY COLOR">
+          <button class="color-btn" style="background-color: #FF0000;" data-color="#FF0000"></button>
+          <button class="color-btn" style="background-color: #FFA500;" data-color="#FFA500"></button>
+          <button class="color-btn" style="background-color: #00FF00;" data-color="#00FF00"></button>
+          <button class="color-btn" style="background-color: #0000FF;" data-color="#0000FF"></button>
+          <button class="color-btn" style="background-color: #a200ff;" data-color="#a200ff"></button>
+          <button class="color-btn" style="background-color: #FFFFFF;" data-color="#FFFFFF"></button>
+        </div>
+      </div>
+
+      <button class="accordion">💾 EXPORT</button>
+      <div class="panel">
+        <button id="btn-download" class="tool-btn export-btn">💾 SAVE</button>
+        <button id="btn-record" class="record-btn">🔴 RECORD</button>
+      </div>
+
     </div>
 
     <div id="canvas-container">

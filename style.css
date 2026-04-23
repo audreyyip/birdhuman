@@ -17,22 +17,98 @@ body {
   height: 100vh;
 }
 
+/* --- NEW UI OVERLAYS --- */
+#status-indicator {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background-color: rgba(0, 0, 0, 0.7);
+  padding: 10px 15px;
+  border-radius: 6px;
+  font-family: monospace;
+  font-size: 16px;
+  font-weight: bold;
+  border: 1px solid #444;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+#record-indicator {
+  position: absolute;
+  top: 70px;
+  right: 20px;
+  background-color: rgba(255, 0, 0, 0.8);
+  padding: 8px 15px;
+  border-radius: 6px;
+  font-family: monospace;
+  font-size: 14px;
+  font-weight: bold;
+  z-index: 1000;
+  pointer-events: none;
+  display: none; /* Hidden by default */
+}
+
+#intro-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 80%;
+  text-align: center;
+  font-size: 4vw;
+  font-weight: bold;
+  text-shadow: 4px 4px 15px rgba(0,0,0,0.9);
+  z-index: 1000;
+  pointer-events: none; /* Allows clicks to pass through to the canvas/sidebar */
+}
+/* ----------------------- */
+
 #toolbar {
   position: absolute;
   top: 0;
   left: 0;
   height: 100vh;
-  width: 100px; 
-  background-color: rgba(20, 20, 20, 0.9); 
+  width: 110px; 
+  background-color: rgba(20, 20, 20, 0.95); 
   backdrop-filter: blur(10px);
-  z-index: 10;
+  z-index: 9999; 
+  pointer-events: auto;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
-  padding: 15px 5px;
+  gap: 5px;
+  padding: 10px 0;
   overflow-y: auto;
+  overflow-x: hidden;
   border-right: 2px solid #333;
+}
+
+.accordion {
+  background-color: #222;
+  color: #fff;
+  cursor: pointer;
+  padding: 12px 5px;
+  width: 100%;
+  border: none;
+  border-top: 1px solid #444;
+  border-bottom: 1px solid #111;
+  text-align: center;
+  outline: none;
+  font-size: 11px;
+  font-weight: bold;
+  transition: 0.3s;
+}
+.accordion.active, .accordion:hover {
+  background-color: #444;
+}
+.panel {
+  padding: 10px 0;
+  display: none; 
+  background-color: transparent;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
 }
 
 .tool-btn {
@@ -48,6 +124,13 @@ body {
   text-align: center;
 }
 
+.active-draw-btn {
+  background-color: #222;
+  border: 2px solid #555;
+  padding: 15px 2px;
+  margin-bottom: 10px;
+}
+
 .danger-btn { border: 1px solid #ff4444; color: #ff4444; }
 .export-btn { border: 1px solid #4CAF50; color: #4CAF50; }
 
@@ -55,19 +138,16 @@ body {
   font-size: 10px;
   text-align: center;
   color: #888;
-  margin: 5px 0;
+  margin: 0 0 10px 0;
   line-height: 1.2;
 }
 
 .shape-palette {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 10px 0;
-  border-top: 1px solid #333;
-  border-bottom: 1px solid #333;
-  width: 100%;
-  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 5px;
+  width: 90%;
 }
 
 .shape-btn {
@@ -75,20 +155,21 @@ body {
   color: #fff;
   border: 1px solid #444;
   padding: 8px;
-  width: 40px;
-  height: 40px;
+  width: 35px;
+  height: 35px;
   cursor: pointer;
 }
 .shape-btn.active { background-color: #4CAF50; border-color: #fff; }
 
 .color-palette {
   display: flex;
-  flex-direction: column;
-  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: 6px;
+  width: 90%;
 }
 
-.color-picker-input { width: 40px; height: 40px; border: none; cursor: pointer; background: none; }
+.color-picker-input { width: 35px; height: 35px; border: none; cursor: pointer; background: none; }
 .color-btn { width: 30px; height: 30px; border-radius: 50%; border: 2px solid #444; cursor: pointer; }
 
 .record-btn {
@@ -99,10 +180,10 @@ body {
   width: 90%;
   font-size: 11px;
   font-weight: bold;
+  cursor: pointer;
 }
 .record-btn.recording { background-color: #ff4444; color: white; }
 
-/* FULL SCREEN CANVAS LOGIC */
 #canvas-container {
   position: absolute;
   top: 0; left: 0;
@@ -116,18 +197,25 @@ body {
   position: absolute;
   top: 0; left: 0;
   width: 100% !important; height: 100% !important;
-  object-fit: cover; /* Ensures full screen fill */
+  object-fit: cover; 
 }
 #video-wrapper video { z-index: 1; transform: scaleX(-1); }
-#video-wrapper canvas { z-index: 2; }
+#video-wrapper canvas { z-index: 2; pointer-events: none; }
 
 /* VISIBILITY LOGIC */
 .mobile-only { display: none !important; }
-.desktop-only { display: block; }
+.desktop-only { display: inline-block; }
 
 @media screen and (max-width: 1024px) {
-  .mobile-only { display: block !important; }
+  .mobile-only { display: inline-block !important; } /* Uses inline-block so it fits in the text sentence */
   .desktop-only { display: none !important; }
+  #intro-overlay { font-size: 6vw; } /* Slightly bigger on mobile */
+}
+
+/* Force block display specifically for the mobile draw button */
+button.mobile-only { display: none !important; }
+@media screen and (max-width: 1024px) {
+  button.mobile-only { display: block !important; }
 }
 
 #portrait-warning {
@@ -135,7 +223,7 @@ body {
   position: fixed;
   top: 0; left: 0; width: 100vw; height: 100vh;
   background-color: #000;
-  z-index: 9999;
+  z-index: 10000;
   justify-content: center; align-items: center; text-align: center;
 }
 
