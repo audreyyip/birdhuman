@@ -85,8 +85,8 @@ body {
 
 /* --- ICON STYLING --- */
 .btn-icon {
-  width: 14px;
-  height: 14px;
+  width: 2vw;
+  height: 2vw;
   vertical-align: middle;
   margin-right: 4px;
   display: inline-block;
