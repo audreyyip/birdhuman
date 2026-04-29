@@ -5,6 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>PAINT LIKE POLLOCK</title>
   
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Gochi+Hand&display=swap" rel="stylesheet">
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
   <script src="https://unpkg.com/ml5@1/dist/ml5.min.js"></script>
   
@@ -14,79 +18,72 @@
 
   <div id="app-container">
     
-    <div id="status-indicator">🔴 HOVERING</div>
-    <div id="record-indicator">● REC</div>
+    <div id="status-indicator">HOVERING</div>
 
     <div id="intro-overlay">
-      <span class="desktop-only">PRESS [SPACE]</span><span class="mobile-only">TAP [DRAW]</span> + OPEN YOUR MOUTH TO DRAW
+      <span class="desktop-only">PRESS [SPACE]</span><span class="mobile-only">TAP CANVAS</span> + OPEN YOUR MOUTH TO DRAW
     </div>
 
-    <div id="toolbar">
-      <button id="btn-mobile-draw" class="tool-btn mobile-only active-draw-btn">
-        <img src="icon-draw.png" alt="Draw" class="btn-icon"> DRAW
-      </button>
+    <div id="side-toolbar">
+      <button id="btn-undo" class="circle-btn"><img src="imgs/undo.svg" alt="Undo" class="btn-icon"></button>
+      <button id="btn-reset" class="circle-btn danger-btn"><img src="imgs/trash.svg" alt="Clear" class="btn-icon"></button>
+      <button id="btn-toggle-cam" class="circle-btn"><img src="imgs/video.svg" alt="Camera" class="btn-icon"></button>
+      <button id="btn-eraser" class="circle-btn"><img src="imgs/eraser.svg" alt="Erase" class="btn-icon"></button>
       
-      <div class="instructions desktop-only">
-        <p>PRESS [SPACE] TO DRAW</p>
-      </div>
-
-      <button class="accordion">
-        <img src="icon-tools.png" alt="Tools" class="btn-icon">
-      </button>
-      <div class="panel" style="display: flex;">
-        <button id="btn-undo" class="tool-btn">
-          <img src="imgs/undo.svg" alt="Undo" class="btn-icon">
-        </button>
-        <button id="btn-reset" class="tool-btn danger-btn">
-          <img src="imgs/trash.svg" alt="Clear" class="btn-icon"> 
-        </button>
-        <button id="btn-eraser" class="tool-btn">
-          <img src="imgs/eraser.svg" alt="Erase" class="btn-icon"> 
-        </button>
-        <button id="btn-toggle-cam" class="tool-btn">
-          <img src="imgs/video.svg" alt="Camera" class="btn-icon"> 
-        </button>
-      </div>
-
-      <button class="accordion">
-        <img src="imshapes.png" alt="Shapes" class="btn-icon"> 
-      </button>
-      <div class="panel">
-        <div class="shape-palette">
-          <button class="shape-btn active" data-shape="circle">●</button>
-          <button class="shape-btn" data-shape="square">■</button>
-          <button class="shape-btn" data-shape="triangle">▲</button>
-          <button class="shape-btn" data-shape="star">★</button>
+      <div class="accordion-group">
+        <button id="btn-shapes-toggle" class="circle-btn"><img src="imgs/shapes.svg" alt="Shapes" class="btn-icon"></button>
+        <div id="shapes-panel" class="panel hidden">
+          <button class="circle-btn shape-btn active" data-shape="circle"><img src="imgs/circle.svg" alt="Circle" class="btn-icon"></button>
+          <button class="circle-btn shape-btn" data-shape="square"><img src="imgs/square.svg" alt="Square" class="btn-icon"></button>
+          <button class="circle-btn shape-btn" data-shape="triangle"><img src="imgs/triangle.svg" alt="Triangle" class="btn-icon"></button>
+          <button class="circle-btn shape-btn" data-shape="star"><img src="imgs/star.svg" alt="Star" class="btn-icon"></button>
         </div>
       </div>
 
-      <button class="accordion">
-        <img src="imgs/color.svg" alt="Colors" class="btn-icon">
-      </button>
-      <div class="panel">
-        <div class="color-palette">
-          <input type="color" id="color-picker" class="color-picker-input" value="#00FF00" title="PICK ANY COLOR">
-          <button class="color-btn" style="background-color: #FF0000;" data-color="#FF0000"></button>
-          <button class="color-btn" style="background-color: #FFA500;" data-color="#FFA500"></button>
-          <button class="color-btn" style="background-color: #00FF00;" data-color="#00FF00"></button>
-          <button class="color-btn" style="background-color: #0000FF;" data-color="#0000FF"></button>
-          <button class="color-btn" style="background-color: #a200ff;" data-color="#a200ff"></button>
-          <button class="color-btn" style="background-color: #FFFFFF;" data-color="#FFFFFF"></button>
+      <div class="accordion-group">
+        <button id="btn-colors-toggle" class="circle-btn"><img src="imgs/color.svg" alt="Colors" class="btn-icon"></button>
+        <div id="colors-panel" class="panel hidden">
+          <button id="btn-custom-color" class="circle-btn"><img src="imgs/colorwheel.svg" alt="Custom Color" class="btn-icon"></button>
+          <input type="color" id="color-picker" style="display: none;" value="#00FF00">
+          
+          <button class="circle-btn color-btn" style="background-color: #FF0000;" data-color="#FF0000"></button>
+          <button class="circle-btn color-btn" style="background-color: #FFA500;" data-color="#FFA500"></button>
+          <button class="circle-btn color-btn" style="background-color: #00FF00;" data-color="#00FF00"></button>
+          <button class="circle-btn color-btn" style="background-color: #0000FF;" data-color="#0000FF"></button>
+          <button class="circle-btn color-btn" style="background-color: #a200ff;" data-color="#a200ff"></button>
+          <button class="circle-btn color-btn" style="background-color: #FFFFFF;" data-color="#FFFFFF"></button>
         </div>
       </div>
 
-      <button class="accordion">
-        <img src="imgs/download.svg" alt="Export" class="btn-icon"> 
+      <button id="btn-selfie" class="circle-btn"><img src="imgs/camera.svg" alt="Selfie" class="btn-icon"></button>
+      <button id="btn-download" class="circle-btn export-btn"><img src="imgs/download.svg" alt="Save" class="btn-icon"></button>
+    </div>
+
+    <div id="face-widget">
+      <button id="face-widget-toggle" class="circle-btn face-toggle-btn">
+        <img src="imgs/potatoface.svg" alt="Face Options" class="btn-icon" style="width: 25px; height: 25px; margin: 0;"> 
       </button>
-      <div class="panel">
-        <button id="btn-download" class="tool-btn export-btn">
-          <img src="imgs/download.svg" alt="Save" class="btn-icon">
-        </button>
-        <button id="btn-record" class="record-btn">
-          <img src="icon-record.png" alt="Record" class="btn-icon" id="record-icon-img">
+    </div>
+
+    <div id="face-widget-window" class="hidden">
+      <img src="imgs/tab.svg" class="custom-window-bg" alt="Window Background">
+
+      <div class="fake-window-header" id="face-widget-window-header">
+        <button id="face-widget-close" class="close-btn">
+          <img src="imgs/close.svg" alt="Close" style="width: 15px; height: 15px;">
         </button>
       </div>
-
+      
+      <div class="popup-body">
+        <div class="face-diagram-container">
+          <div class="face-outline">
+            <div class="face-point left-eye" data-point="leftEye"><div class="red-dot"></div></div>
+            <div class="face-point right-eye" data-point="rightEye"><div class="red-dot"></div></div>
+            <div class="face-point nose active" data-point="nose"><div class="red-dot"></div></div>
+            <div class="face-point mouth" data-point="mouth"><div class="red-dot"></div></div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div id="canvas-container">
