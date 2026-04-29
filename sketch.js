@@ -14,7 +14,7 @@ let myCanvas;
 let isMobile = false; 
 
 // NEW: Threshold and Stroke State Trackers
-let mouthThreshold = 4; // Stops painting if the mouth opening is smaller than 8px
+let mouthThreshold = 4; // Stops painting if the mouth opening is smaller than 4px
 let isMouthOpen = false; 
 
 let activePoints = { leftEye: false, rightEye: false, nose: true, mouth: false };
@@ -58,9 +58,9 @@ function setup() {
   video = createCapture(constraints);
   video.parent('video-wrapper'); 
   video.elt.setAttribute('playsinline', '');
+  video.elt.setAttribute('autoplay', '');
+  video.elt.muted = true; // CRITICAL: Fixes mobile browsers blocking the camera
   
-  video.hide();
-
   video.elt.addEventListener('loadedmetadata', () => {
     vidW = video.elt.videoWidth || 640;
     vidH = video.elt.videoHeight || 480;
@@ -85,17 +85,29 @@ function setup() {
   document.getElementById('btn-colors-toggle').addEventListener('click', () => { document.getElementById('colors-panel').classList.toggle('hidden'); });
   document.getElementById('btn-custom-color').addEventListener('click', () => { document.getElementById('color-picker').click(); });
 
-  let faceWindow = document.getElementById('face-widget-window');
-  document.getElementById('face-widget-toggle').addEventListener('click', () => { 
-    faceWindow.classList.remove('hidden');
-    document.getElementById('face-widget-toggle').classList.add('hidden'); 
+  // --- FIX: FACE WIDGET LOGIC ---
+  // 1. Target the actual window, not the button wrapper!
+  let faceWindow = document.getElementById('face-widget-window'); 
+  let toggleBtn = document.getElementById('face-widget-toggle');
+  let closeBtn = document.getElementById('face-widget-close');
+
+  // 2. Logic to OPEN the window (Prevents bouncing to the top)
+  toggleBtn.addEventListener('click', (e) => {
+    e.preventDefault(); 
+    faceWindow.classList.remove('hidden'); 
   });
-  document.getElementById('face-widget-close').addEventListener('click', () => { 
+
+  // 3. Logic to CLOSE the window (Stops drag events from firing)
+  closeBtn.addEventListener('mousedown', (e) => e.stopPropagation());
+  closeBtn.addEventListener('touchstart', (e) => e.stopPropagation());
+  closeBtn.addEventListener('click', (e) => { 
+    e.stopPropagation(); 
     faceWindow.classList.add('hidden');
-    document.getElementById('face-widget-toggle').classList.remove('hidden'); 
   });
   
+  // 4. Attach drag behavior to the window
   dragElement(faceWindow);
+  // -----------------------------
 
   let facePointsUI = document.querySelectorAll('.face-point');
   facePointsUI.forEach(btn => {
@@ -114,7 +126,7 @@ function setup() {
 
   document.getElementById('btn-undo').addEventListener('click', undoStroke);
   document.getElementById('btn-reset').addEventListener('click', () => { pg.clear(); undoStack = []; saveState(); });
-  document.getElementById('btn-download').addEventListener('click', () => { save(pg, 'POLLOCK-ART.png'); });
+  document.getElementById('btn-download').addEventListener('click', downloadArtResponsive);
   document.getElementById('btn-eraser').addEventListener('click', () => { isErasing = !isErasing; });
   document.getElementById('btn-selfie').addEventListener('click', takeSelfie);
   document.getElementById('btn-toggle-cam').addEventListener('click', (e) => { showCamera = !showCamera; });
@@ -135,47 +147,77 @@ function setup() {
   });
 }
 
+// --- DRAG WIDGET FUNCTIONALITY ---
 function dragElement(elmnt) {
-  var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-  let header = document.getElementById(elmnt.id + "-header");
+  let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
   
+  // Attach drag event to the header if it exists, otherwise to the whole window
+  let header = document.getElementById(elmnt.id + "-header");
   if (header) {
-    header.onmousedown = dragMouseDown; header.ontouchstart = dragTouchStart;
+    header.onmousedown = dragMouseDown;
+    header.ontouchstart = dragTouchStart;
   } else {
-    elmnt.onmousedown = dragMouseDown; elmnt.ontouchstart = dragTouchStart;
+    elmnt.onmousedown = dragMouseDown;
+    elmnt.ontouchstart = dragTouchStart;
   }
 
   function dragMouseDown(e) {
-    e = e || window.event; e.preventDefault();
-    pos3 = e.clientX; pos4 = e.clientY;
-    document.onmouseup = closeDragElement; document.onmousemove = elementDrag;
-    elmnt.style.bottom = 'auto'; elmnt.style.right = 'auto'; // Break CSS anchor
-  }
-
-  function elementDrag(e) {
-    e = e || window.event; e.preventDefault();
-    pos1 = pos3 - e.clientX; pos2 = pos4 - e.clientY;
-    pos3 = e.clientX; pos4 = e.clientY;
-    elmnt.style.top = (elmnt.offsetTop - pos2) + "px"; elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
+    e = e || window.event;
+    e.preventDefault();
+    pos3 = e.clientX;
+    pos4 = e.clientY;
+    document.onmouseup = closeDragElement;
+    document.onmousemove = elementDrag;
+    
+    // Lock in the current screen position before breaking the anchors
+    let rect = elmnt.getBoundingClientRect();
+    elmnt.style.top = rect.top + "px";
+    elmnt.style.left = rect.left + "px";
+    elmnt.style.bottom = 'auto'; 
+    elmnt.style.right = 'auto'; 
   }
 
   function dragTouchStart(e) {
     e = e || window.event;
-    pos3 = e.touches[0].clientX; pos4 = e.touches[0].clientY;
-    document.ontouchend = closeDragElement; document.ontouchmove = elementTouchDrag;
-    elmnt.style.bottom = 'auto'; elmnt.style.right = 'auto'; // Break CSS anchor
+    pos3 = e.touches[0].clientX;
+    pos4 = e.touches[0].clientY;
+    document.ontouchend = closeDragElement;
+    document.ontouchmove = elementTouchDrag;
+    
+    // Lock in the current screen position for mobile touches too
+    let rect = elmnt.getBoundingClientRect();
+    elmnt.style.top = rect.top + "px";
+    elmnt.style.left = rect.left + "px";
+    elmnt.style.bottom = 'auto'; 
+    elmnt.style.right = 'auto'; 
+  }
+
+  function elementDrag(e) {
+    e = e || window.event;
+    e.preventDefault();
+    pos1 = pos3 - e.clientX;
+    pos2 = pos4 - e.clientY;
+    pos3 = e.clientX;
+    pos4 = e.clientY;
+    elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
+    elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
   }
 
   function elementTouchDrag(e) {
     e = e || window.event;
-    pos1 = pos3 - e.touches[0].clientX; pos2 = pos4 - e.touches[0].clientY;
-    pos3 = e.touches[0].clientX; pos4 = e.touches[0].clientY;
-    elmnt.style.top = (elmnt.offsetTop - pos2) + "px"; elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
+    pos1 = pos3 - e.touches[0].clientX;
+    pos2 = pos4 - e.touches[0].clientY;
+    pos3 = e.touches[0].clientX;
+    pos4 = e.touches[0].clientY;
+    elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
+    elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
   }
 
   function closeDragElement() {
-    document.onmouseup = null; document.onmousemove = null;
-    document.ontouchend = null; document.ontouchmove = null;
+    document.onmouseup = null;
+    document.onmousemove = null;
+    document.ontouchend = null;
+    document.ontouchmove = null;
   }
 }
 
@@ -188,16 +230,9 @@ function calculateLayout() {
 }
 
 function draw() {
-  clear(); 
-
-  // ALWAYS draw the video to force the browser to keep the camera stream active!
-  push();
-  translate(vidW, 0);
-  scale(-1, 1);
-  image(video, 0, 0, vidW, vidH);
-  pop();
-
-  // If the camera is toggled "off", just hide it by drawing a black box OVER it
+  clear(); // Makes canvas transparent so the native HTML video shows through
+  
+  // If camera is toggled "off", draw a black box on the canvas to cover the video beneath
   if (!showCamera) {
     fill(0);
     rect(0, 0, vidW, vidH);
@@ -353,4 +388,40 @@ function toggleDrawing() {
 
 function saveState() { undoStack.push(pg.get()); if (undoStack.length > 15) undoStack.shift(); }
 function undoStroke() { if (undoStack.length > 0) { let lastState = undoStack.pop(); pg.clear(); pg.image(lastState, 0, 0); } }
-function takeSelfie() { saveCanvas(myCanvas, 'POLLOCK-SELFIE', 'png'); }
+
+// --- RESPONSIVE DOWNLOAD FUNCTIONS ---
+function getScaledCanvas(sourceCanvas, includeVideo = false) {
+  let snap = createGraphics(windowWidth, windowHeight);
+  let scale = Math.max(windowWidth / width, windowHeight / height);
+  let newW = width * scale;
+  let newH = height * scale;
+  let x = (windowWidth - newW) / 2;
+  let y = (windowHeight - newH) / 2;
+  
+  // If taking a selfie, explicitly stamp the video layer down first
+  if (includeVideo && showCamera) {
+    snap.push();
+    snap.translate(windowWidth, 0);
+    snap.scale(-1, 1);
+    snap.image(video, x, y, newW, newH); 
+    snap.pop();
+  } else if (!showCamera && includeVideo) {
+    snap.background(0); // Add black background if camera is off
+  }
+  
+  // Stamp the art layer on top
+  snap.image(sourceCanvas, x, y, newW, newH);
+  return snap;
+}
+
+function takeSelfie() { 
+  let snap = getScaledCanvas(myCanvas, true); // true = include video layer
+  save(snap, 'POLLOCK-SELFIE.png'); 
+  snap.remove();
+}
+
+function downloadArtResponsive() {
+  let snap = getScaledCanvas(pg, false); // false = art only
+  save(snap, 'POLLOCK-ART.png');
+  snap.remove();
+}

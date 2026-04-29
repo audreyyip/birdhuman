@@ -56,6 +56,15 @@ body {
   flex-direction: column;
   gap: 12px;
   pointer-events: auto;
+  /* NEW: Enables scrolling and adds breathing room */
+  max-height: calc(100dvh - 40px);
+  overflow-y: auto;
+  padding-bottom: 20px;
+}
+
+/* NEW: Hides the default scrollbar for a cleaner look */
+#side-toolbar::-webkit-scrollbar {
+  display: none;
 }
 
 .accordion-group {
@@ -79,6 +88,7 @@ body {
   border-radius: 50%;
   width: 45px;
   height: 45px;
+  flex-shrink: 0;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -102,13 +112,22 @@ body {
 }
 .face-toggle-btn { width: 50px; height: 50px; }
 
+#face-diagram{
+  width: 150px;
+  aspect-ratio: 3/4;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 20000; /* Ensures the button is above the window */
+}
+
 #face-widget-window {
   position: absolute;
   bottom: 80px; /* Positions perfectly above the bottom-right button */
   right: 20px;
   top: auto;
   left: auto;
-  z-index: 10000; /* Must be higher than the widget to remain visible */
+  z-index: 90; /* Must be higher than the widget to remain visible */
   width: 200px;
   display: flex;
   flex-direction: column;
@@ -138,7 +157,16 @@ body {
 .face-diagram-container { pointer-events: auto; }
 
 /* --- FACE DIAGRAM STYLING --- */
-.face-diagram-container { width: 150px; aspect-ratio: 3/4; display: flex; justify-content: center; align-items: center; }
+.face-diagram-container { 
+  width: 150px; 
+  aspect-ratio: 3/4; 
+  display: flex; 
+  justify-content: center; 
+  align-items: center; 
+  position: relative; /* Needed for z-index to work */
+  z-index: 10;        /* Pulls the SVG above the window background */
+}
+
 .face-outline {
   position: relative; width: 100%; height: 100%;
   border: none; background-color: transparent;
@@ -154,9 +182,19 @@ body {
 .face-point.active .red-dot { display: block; }
 
 /* --- CANVAS --- */
+/* --- CANVAS & VIDEO --- */
 #canvas-container { position: absolute; top: 0; left: 0; width: 100vw; height: 100%; z-index: 1; }
 #video-wrapper { position: relative; width: 100%; height: 100%; }
-#video-wrapper canvas { position: absolute; top: 0; left: 0; width: 100% !important; height: 100% !important; object-fit: cover; z-index: 2; }
+
+#video-wrapper canvas, #video-wrapper video { 
+  position: absolute; top: 0; left: 0; 
+  width: 100% !important; height: 100% !important; 
+  object-fit: cover; 
+}
+#video-wrapper video { z-index: 1; transform: scaleX(-1); }
+#video-wrapper canvas { z-index: 2; }
+
+
 
 .mobile-only { display: none !important; }
 .desktop-only { display: inline-block; }
