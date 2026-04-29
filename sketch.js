@@ -14,7 +14,7 @@ let myCanvas;
 let isMobile = false; 
 
 // NEW: Threshold and Stroke State Trackers
-let mouthThreshold = 4; // Stops painting if the mouth opening is smaller than 4px
+let mouthThreshold = 2; // Stops painting if the mouth opening is smaller than 4px
 let isMouthOpen = false; 
 
 let activePoints = { leftEye: false, rightEye: false, nose: true, mouth: false };
