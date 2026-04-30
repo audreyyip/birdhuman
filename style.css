@@ -159,26 +159,42 @@ body {
   display: flex; justify-content: center; align-items: center;
 }
 .popup-body { padding: 15px; display: flex; justify-content: center; pointer-events: none; }
-.face-diagram-container { pointer-events: auto; }
 
 /* --- FACE DIAGRAM STYLING --- */
 .face-diagram-container { 
   width: 150px; 
-  aspect-ratio: 3/4; 
+  height: 200px; /* Force explicit height to stop flexbox collapse */
   display: flex; 
   justify-content: center; 
   align-items: center; 
-  position: relative; /* Needed for z-index to work */
-  z-index: 10;        /* Pulls the SVG above the window background */
+  position: relative; 
+  z-index: 10;        
 }
 
 .face-outline {
-  position: relative; width: 100%; height: 100%;
-  border: none; background-color: transparent;
-  background-image: url('imgs/my-custom-face.svg');
-  background-size: contain; background-position: center; background-repeat: no-repeat;
+  position: absolute; /* Pin it so it doesn't get crushed */
+  top: 0; 
+  left: 0;
+  width: 100%; 
+  height: 100%;
+  border: none; 
+  background-color: transparent;
+  background-image: url('imgs/potatoface.svg');
+  background-size: contain; 
+  background-position: center; 
+  background-repeat: no-repeat;
 }
-.face-point { position: absolute; cursor: pointer; display: flex; justify-content: center; align-items: center; background-color: transparent; border: none; }
+.face-point { 
+  position: absolute; 
+  cursor: pointer; 
+  display: flex; 
+  justify-content: center; 
+  align-items: center; 
+  background-color: transparent; 
+  border: none; 
+  pointer-events: auto; 
+}
+
 .left-eye { top: 25%; left: 15%; width: 30%; height: 22%; }
 .right-eye { top: 25%; right: 15%; width: 30%; height: 22%; }
 .nose { top: 48%; left: 50%; transform: translate(-50%, -50%); width: 25%; height: 26%; }
@@ -201,6 +217,7 @@ body {
   position: relative; 
   width: 100%; 
   height: 100%; 
+  transform: scaleX(-1);
 }
 
 #video-wrapper canvas, #video-wrapper video { 
@@ -209,10 +226,19 @@ body {
   left: 0; 
   width: 100% !important; 
   height: 100% !important; 
-  /* CHANGE 'cover' to 'fill' to stop the massive zoom, 
-     or 'contain' if you want to keep aspect ratio and see shoulders */
-  object-fit: fill; 
+  object-fit: cover; 
 }
+
+/* --- ADD THIS TO FIX THE LAYERING --- */
+#video-wrapper video {
+  z-index: 1; /* Pushes the camera feed to the back */
+}
+
+#video-wrapper canvas {
+  z-index: 2; /* Pulls the drawing layer to the front */
+  pointer-events: none; /* Lets clicks pass through to UI if needed */
+}
+/* ------------------------------------ */
 
 
 .mobile-only { display: none !important; }
@@ -223,8 +249,8 @@ body {
   .desktop-only { display: none !important; }
   
   #intro-overlay { 
-    font-size: 8vw; 
-    width: 80%;
+    font-size: 6vw; 
+    width: 70%;
     line-height: 1.2;
   }
 

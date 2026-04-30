@@ -40,8 +40,8 @@ function setup() {
   let videoConstraints = { facingMode: "user" };
 
   if (isMobile) {
-    videoConstraints.width = { ideal: 480 };
-    videoConstraints.height = { ideal: 640 };
+    videoConstraints.width = { ideal: 720 };
+    videoConstraints.height = { ideal: 1280 };
   }
 
   myCanvas = createCanvas(vidW, vidH);
@@ -65,12 +65,11 @@ function setup() {
     vidW = video.elt.videoWidth || 640;
     vidH = video.elt.videoHeight || 480;
     
-    // --- NEW: Force the canvas to match the screen size ---
-    resizeCanvas(windowWidth, windowHeight);
-    pg.resizeCanvas(windowWidth, windowHeight);
-    // ------------------------------------------------------
-    
+    // REVERT THIS: Lock canvas to the camera resolution, not the window!
+    resizeCanvas(vidW, vidH);
+    pg.resizeCanvas(vidW, vidH);
     pg.clear();
+    
     calculateLayout();
     saveState();
     faceMesh.detectStart(video, gotFaces);
@@ -270,21 +269,17 @@ function draw() {
     for (let key in currentPoints) {
       if (activePoints[key]) {
         
-        // --- THIS IS THE NEW COORDINATE LOGIC ---
-        // Calculate how much to stretch the points to match the screen
-        let ratioX = width / vidW;
-        let ratioY = height / vidH;
-
-        // Apply the stretch to the facial points
-        let mirroredX = (vidW - rawPts[key].x) * ratioX;
-        let targetY = rawPts[key].y * ratioY;
-        // ----------------------------------------
+        // --- THE FIX: NO MORE MATH ---
+        // Because CSS perfectly mirrors the canvas, we just use the raw coordinates.
+        let targetX = rawPts[key].x;
+        let targetY = rawPts[key].y;
+        // -----------------------------
 
         if (currentPoints[key].x === undefined) {
-          currentPoints[key].x = mirroredX; 
+          currentPoints[key].x = targetX; 
           currentPoints[key].y = targetY;
         } else {
-          currentPoints[key].x = lerp(currentPoints[key].x, mirroredX, lerpSpeed);
+          currentPoints[key].x = lerp(currentPoints[key].x, targetX, lerpSpeed);
           currentPoints[key].y = lerp(currentPoints[key].y, targetY, lerpSpeed);
         }
 
