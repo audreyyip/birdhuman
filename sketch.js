@@ -42,8 +42,12 @@ function setup() {
   myCanvas = createCanvas(vidW, vidH);
   myCanvas.parent('video-wrapper'); 
 
+  myCanvas.mousePressed(() => {
+    toggleDrawing();
+  });
+  
   myCanvas.elt.addEventListener('pointerdown', (e) => {
-    if (isMobile) { e.preventDefault(); toggleDrawing(); }
+      toggleDrawing(); 
   });
 
   pg = createGraphics(vidW, vidH);
@@ -264,10 +268,8 @@ function draw() {
     for (let key in currentPoints) {
       if (activePoints[key]) {
         
-        // --- THE FIX: NO MORE MATH ---
-        // Because CSS perfectly mirrors the canvas, we just use the raw coordinates.
-        let targetX = rawPts[key].x;
-        let targetY = rawPts[key].y;
+        let targetX = map(rawPts[key].x, 0, vidW, 0, width);
+        let targetY = map(rawPts[key].y, 0, vidH, 0, height);
         // -----------------------------
 
         if (currentPoints[key].x === undefined) {

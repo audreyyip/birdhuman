@@ -107,6 +107,10 @@ body {
 }
 .hidden { display: none !important; }
 
+.color-btn {
+  background-image: none !important;
+}
+
 /* --- DRAGGABLE FACE WIDGET --- */
 #face-widget {
   position: absolute;
@@ -230,6 +234,7 @@ body {
   transform: scaleX(-1); /* <-- THIS MIRRORS THE CAMERA VISUALLY */
 }
 
+/* style.css - Update these lines */
 #video-wrapper canvas { 
   position: absolute; 
   top: 0; 
@@ -238,7 +243,7 @@ body {
   height: 100% !important; 
   object-fit: cover; 
   z-index: 2; 
-  pointer-events: none; 
+  pointer-events: auto; /* Changed from none to auto */
 }
 
 /* --- ADD THIS TO FIX THE LAYERING --- */
