@@ -195,10 +195,10 @@ body {
   pointer-events: auto; 
 }
 
-.left-eye { top: 25%; left: 15%; width: 30%; height: 22%; }
-.right-eye { top: 25%; right: 15%; width: 30%; height: 22%; }
-.nose { top: 48%; left: 50%; transform: translate(-50%, -50%); width: 25%; height: 26%; }
-.mouth { bottom: 15%; left: 50%; transform: translateX(-50%); width: 50%; height: 18%; }
+.left-eye { top: 27%; left: 17%; width: 30%; height: 22%; }
+.right-eye { top: 27%; right: 15%; width: 30%; height: 22%; }
+.nose { top: 55%; left: 53%; transform: translate(-50%, -50%); width: 25%; height: 26%; }
+.mouth { bottom: 17%; left: 54%; transform: translateX(-50%); width: 50%; height: 18%; }
 .red-dot { width: 8px; height: 8px; background-color: red; border-radius: 50%; display: none; box-shadow: 0 0 5px red; }
 .face-point.active .red-dot { display: block; }
 
