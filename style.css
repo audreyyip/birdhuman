@@ -84,7 +84,6 @@ body {
 
 .circle-btn {
   background-image: url('imgs/circle-btn.svg');
-  background-color: #ffffff;
   border: 2px solid #000;
   border-radius: 50%;
   width: 45px;
@@ -99,7 +98,7 @@ body {
 }
 
 .circle-btn:active { transform: translateY(2px); }
-.circle-btn.active { border-color: #FF2B79; background-color: #e8f5e9; }
+.circle-btn.active { border-color: #FFE100; }
 .btn-icon { width: 22px; height: 22px; margin: 0; display: block; }
 
 .circle-btn:hover{
