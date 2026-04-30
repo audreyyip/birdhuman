@@ -1,7 +1,7 @@
 let faceMesh;
 let video;
 let faces = [];
-let options = { maxFaces: 1, refineLandmarks: true, flipHorizontal: false };
+let options = { maxFaces: 1, refineLandmarks: true, flipHorizontal: true };
 
 let vidW = 640; 
 let vidH = 480;
@@ -38,11 +38,6 @@ function preload() {
 function setup() {
   isMobile = window.innerWidth <= 1024 || /Mobi|Android/i.test(navigator.userAgent);
   let videoConstraints = { facingMode: "user" };
-
-  if (isMobile) {
-    videoConstraints.width = { ideal: 720 };
-    videoConstraints.height = { ideal: 1280 };
-  }
 
   myCanvas = createCanvas(vidW, vidH);
   myCanvas.parent('video-wrapper'); 

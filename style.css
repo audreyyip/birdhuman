@@ -217,16 +217,29 @@ body {
   position: relative; 
   width: 100%; 
   height: 100%; 
-  transform: scaleX(-1);
 }
 
-#video-wrapper canvas, #video-wrapper video { 
+/* 1. Put the camera feed in the back */
+#video-wrapper video { 
   position: absolute; 
   top: 0; 
   left: 0; 
   width: 100% !important; 
   height: 100% !important; 
   object-fit: cover; 
+  z-index: 1; 
+  transform: scaleX(-1); /* <-- THIS MIRRORS THE CAMERA VISUALLY */
+}
+
+#video-wrapper canvas { 
+  position: absolute; 
+  top: 0; 
+  left: 0; 
+  width: 100% !important; 
+  height: 100% !important; 
+  object-fit: cover; 
+  z-index: 2; 
+  pointer-events: none; 
 }
 
 /* --- ADD THIS TO FIX THE LAYERING --- */
@@ -250,7 +263,7 @@ body {
   
   #intro-overlay { 
     font-size: 6vw; 
-    width: 70%;
+    width: 60%;
     line-height: 1.2;
   }
 
