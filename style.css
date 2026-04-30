@@ -188,23 +188,54 @@ body {
 
 /* --- CANVAS --- */
 /* --- CANVAS & VIDEO --- */
-#canvas-container { position: absolute; top: 0; left: 0; width: 100vw; height: 100%; z-index: 1; }
-#video-wrapper { position: relative; width: 100%; height: 100%; }
+#canvas-container { 
+  position: absolute; 
+  top: 0; 
+  left: 0; 
+  width: 100vw; 
+  height: 100dvh; /* Use dynamic viewport height */
+  z-index: 1; 
+}
+
+#video-wrapper { 
+  position: relative; 
+  width: 100%; 
+  height: 100%; 
+}
 
 #video-wrapper canvas, #video-wrapper video { 
-  position: absolute; top: 0; left: 0; 
-  width: 100% !important; height: 100% !important; 
-  object-fit: cover; 
+  position: absolute; 
+  top: 0; 
+  left: 0; 
+  width: 100% !important; 
+  height: 100% !important; 
+  /* CHANGE 'cover' to 'fill' to stop the massive zoom, 
+     or 'contain' if you want to keep aspect ratio and see shoulders */
+  object-fit: fill; 
 }
-#video-wrapper video { z-index: 1; transform: scaleX(-1); }
-#video-wrapper canvas { z-index: 2; }
-
 
 
 .mobile-only { display: none !important; }
 .desktop-only { display: inline-block; }
+
 @media screen and (max-width: 1024px) {
   .mobile-only { display: inline-block !important; } 
   .desktop-only { display: none !important; }
-  #intro-overlay { font-size: 6vw; } 
+  
+  #intro-overlay { 
+    font-size: 8vw; 
+    width: 80%;
+    line-height: 1.2;
+  }
+
+  #status-indicator {
+    top: 10px;
+    right: 10px;
+    font-size: 24px;
+  }
+
+  #side-toolbar {
+    left: 10px;
+    gap: 8px;
+  }
 }
